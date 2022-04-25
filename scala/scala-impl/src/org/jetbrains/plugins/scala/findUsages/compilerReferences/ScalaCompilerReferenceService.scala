@@ -4,7 +4,6 @@ import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.{AtomicInteger, LongAdder}
 import java.util.concurrent.locks.ReentrantReadWriteLock
-
 import com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -14,11 +13,11 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.search.{ScopeOptimizer, SearchScope}
-import com.intellij.psi.{PsiClass, PsiDocumentManager, PsiElement}
+import com.intellij.psi.{PsiClass, PsiDocumentManager, PsiElement, PsiFile}
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.jps.backwardRefs.CompilerRef
 import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex
-import org.jetbrains.plugins.scala.ScalaBundle
+import org.jetbrains.plugins.scala.{ScalaBundle, ScalaFileType}
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.findUsages.compilerReferences.compilation._
 import org.jetbrains.plugins.scala.findUsages.compilerReferences.indices.IndexerFailure._
@@ -40,9 +39,12 @@ final private[findUsages] class ScalaCompilerReferenceService(project: Project) 
   private[this] val openCloseLock    = lock.writeLock()
   private[this] val readDataLock     = lock.readLock()
 
+  private[this] val fileTypes =
+    (LanguageCompilerRefAdapter.EP_NAME.getExtensions :+ ScalaCompilerRefAdapter).flatMap(_.getFileTypes.asScala)
+
   private[this] val dirtyScopeHolder = new ScalaDirtyScopeHolder(
     project,
-    LanguageCompilerRefAdapter.EP_NAME.getExtensions.flatMap(_.getFileTypes.asScala),
+    fileTypes,
     projectFileIndex,
     FileDocumentManager.getInstance(),
     PsiDocumentManager.getInstance(project),
@@ -225,10 +227,16 @@ final private[findUsages] class ScalaCompilerReferenceService(project: Project) 
     for {
       r       <- reader
       file    <- ScalaPsiUtil.fileContext(e).toOption
-      adapter <- LanguageCompilerRefAdapter.findAdapter(file).toOption
+      adapter <- findAdapter(file)
       ref     <- adapter.asCompilerRef(e, r.getNameEnumerator).toOption
     } yield ref
   }
+
+  private[this] def findAdapter(file: PsiFile): Option[LanguageCompilerRefAdapter] =
+    if (file.getFileType == ScalaFileType.INSTANCE)
+      Option(ScalaCompilerRefAdapter)
+    else
+      LanguageCompilerRefAdapter.findAdapter(file).toOption
 
   private[this] def withReader(target: PsiElement)(
     builder: ScalaCompilerReferenceReader => CompilerRef => Set[UsagesInFile]
