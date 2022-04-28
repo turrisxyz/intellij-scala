@@ -1,7 +1,6 @@
 package org.jetbrains.plugins.scala.lang.psi.light
 
 import java.util
-
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.{Pair, TextRange}
@@ -15,9 +14,11 @@ import com.intellij.psi.scope.PsiScopeProcessor
 import com.intellij.psi.scope.processor.MethodsProcessor
 import com.intellij.psi.search.{GlobalSearchScope, SearchScope}
 import com.intellij.psi.util.PsiUtil
+
 import javax.swing._
 import org.jetbrains.plugins.scala.caches.BlockModificationTracker
 import org.jetbrains.plugins.scala.extensions._
+import org.jetbrains.plugins.scala.lang.lexer.ScalaModifier
 import org.jetbrains.plugins.scala.lang.psi.adapters.PsiClassAdapter
 import org.jetbrains.plugins.scala.lang.psi.api.PropertyMethods._
 import org.jetbrains.plugins.scala.lang.psi.api.base.ScAnnotationsHolder
@@ -109,8 +110,10 @@ class PsiClassWrapper(val definition: ScTemplateDefinition,
             }
           }
         }
-        val members = t.membersWithSynthetic
-        members foreach {
+
+        val members = t.membersWithSynthetic.filterNot(_.hasModifierPropertyScala(ScalaModifier.INLINE))
+
+        members.foreach {
           case fun: ScFunctionDefinition => res += fun.getStaticTraitFunctionWrapper(this)
           case definition: ScPatternDefinition => //only getters and setters should be added
             addGettersAndSetters(definition, definition.declaredElements)
