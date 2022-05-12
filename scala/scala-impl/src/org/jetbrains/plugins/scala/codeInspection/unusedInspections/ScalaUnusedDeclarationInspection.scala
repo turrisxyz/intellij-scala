@@ -21,7 +21,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.base.patterns.ScReferencePattern
 import org.jetbrains.plugins.scala.lang.psi.api.base.types.ScSelfTypeElement
 import org.jetbrains.plugins.scala.lang.psi.api.base.{ScPatternList, ScStableCodeReference}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScClassParameter, ScParameter}
-import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScEnumCase, ScFunction, ScFunctionDeclaration, ScFunctionDefinition, ScPatternDefinition}
+import org.jetbrains.plugins.scala.lang.psi.api.statements.{ScEnumCase, ScFunction, ScFunctionDeclaration, ScFunctionDefinition, ScPatternDefinition, ScVariable}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.templates.{ScExtendsBlock, ScTemplateBody}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef._
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.{ScModifierListOwner, ScNamedElement}
@@ -77,6 +77,8 @@ class ScalaUnusedDeclarationInspection extends HighlightingPassInspection {
     } else if (!reportPublicDeclarations.isEnabled(element)) {
       true
     } else if (checkIfEnumUsedOutsideScala(element)) {
+      true
+    } else if (ScalaPsiUtil.isImplicit(element)) {
       true
     } else {
       element match {
@@ -251,10 +253,10 @@ class ScalaUnusedDeclarationInspection extends HighlightingPassInspection {
     case e if !isOnlyVisibleInLocalFile(e) && TestSourcesFilter.isTestSources(e.getContainingFile.getVirtualFile, e.getProject) => false
     case _: ScSelfTypeElement => false
     case e: ScalaPsiElement if e.module.exists(_.isBuildModule) => false
-    case e: PsiElement if UnusedDeclarationInspectionBase.isDeclaredAsEntryPoint(e) => false
+    case e: PsiElement if UnusedDeclarationInspectionBase.isDeclaredAsEntryPoint(e) && !ScalaPsiUtil.isImplicit(e) => false
     case obj: ScObject if ScalaMainMethodUtil.hasScala2MainMethod(obj) => false
     case t: ScTypeDefinition if t.isSAMable => false
-    case n: ScNamedElement if ScalaPsiUtil.isImplicit(n) || n.nameId == null || n.name == "_" || isOverridingOrOverridden(n) => false
+    case n: ScNamedElement if n.nameId == null || n.name == "_" || isOverridingOrOverridden(n) => false
     case n: ScNamedElement =>
       n match {
         case p: ScModifierListOwner if hasOverrideModifier(p) => false

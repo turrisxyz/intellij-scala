@@ -67,7 +67,7 @@ class InspectionOptionsTest {
     customEnabled = true
     assert(inspectionOptions.isEnabled(null))
   }
-
+  
   @Test
   def test_select_from_checkbox(): Unit = {
     val inspectionOptions = InspectionOptions("twoOptions", "Two Options")
