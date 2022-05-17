@@ -8,10 +8,11 @@ import com.intellij.openapi.roots.TestSourcesFilter
 import com.intellij.psi._
 import com.intellij.psi.search._
 import com.intellij.psi.search.searches.ReferencesSearch
+import net.miginfocom.swing.MigLayout
 import org.jdom.Element
 import org.jetbrains.annotations.Nls
 import org.jetbrains.plugins.scala.annotator.usageTracker.ScalaRefCountHolder
-import org.jetbrains.plugins.scala.codeInspection.ui.InspectionOptions
+import org.jetbrains.plugins.scala.codeInspection.ui.{InspectionOption, InspectionOptions}
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.lexer.ScalaModifier
 import org.jetbrains.plugins.scala.lang.psi.ScalaPsiUtil
@@ -31,32 +32,55 @@ import org.jetbrains.plugins.scala.project.{ModuleExt, ScalaLanguageLevel}
 import org.jetbrains.plugins.scala.util.SAMUtil.PsiClassToSAMExt
 import org.jetbrains.plugins.scala.util.{ScalaMainMethodUtil, ScalaUsageNamesUtil}
 
-import javax.swing.JComponent
+import javax.swing.{JComponent, JPanel}
 import scala.jdk.CollectionConverters._
 
-class ScalaUnusedDeclarationInspection extends HighlightingPassInspection {
-
+final class ScalaUnusedDeclarationInspection extends HighlightingPassInspection {
   private val reportPublicDeclarations =
     InspectionOptions(
       "reportPublicDeclarations",
       ScalaInspectionBundle.message("name.unused.declaration.report.public.declarations")
     )
 
+  private val reportLocalDeclarations = {
+    // TODO: This is checked for every element but the result is the same for all elements in one module - optimize by creating a map ModuleName -> Boolean
+    val isCompilerOptionEnabled: ScNamedElement => Boolean = { elem =>
+      val compilerOptions = elem.module.map(_.scalaCompilerSettings.additionalCompilerOptions).getOrElse(Nil)
+      compilerOptions.contains("-Wunused:locals") || compilerOptions.contains("-Wunused:linted") || compilerOptions.contains("-Xlint:unused")
+    }
+
+    new InspectionOptions(
+      "reportLocalDeclarations",
+      ScalaInspectionBundle.message("name.unused.declaration.report.local.declarations"),
+      Seq(
+        InspectionOptions.AlwaysEnabled,
+        InspectionOption(ScalaInspectionBundle.message("inspection.option.check.compiler", "-Wunused:locals"), isCompilerOptionEnabled),
+        InspectionOptions.AlwaysDisabled
+      )
+    )
+  }
+
   def setReportPublicDeclarationsEnabled(enabled: Boolean): Unit =
     reportPublicDeclarations.setChecked(enabled)
 
   override def writeSettings(node: Element): Unit = {
     reportPublicDeclarations.writeSettings(node)
+    reportLocalDeclarations.writeSettings(node)
     super.writeSettings(node)
   }
 
   override def readSettings(node: Element): Unit = {
     super.readSettings(node)
     reportPublicDeclarations.readSettings(node)
+    reportLocalDeclarations.readSettings(node)
   }
 
-  override def createOptionsPanel: JComponent =
-    reportPublicDeclarations.checkBox
+  override def createOptionsPanel: JComponent = {
+    val panel = new JPanel(new MigLayout("fillx, ins 0"))
+    panel.add(reportLocalDeclarations.comboBox, "wrap, spanx")
+    panel.add(reportPublicDeclarations.checkBox, "wrap, spanx")
+    panel
+  }
 
   import ScalaUnusedDeclarationInspection._
 
@@ -65,13 +89,14 @@ class ScalaUnusedDeclarationInspection extends HighlightingPassInspection {
   override def getDisplayName: String = ScalaInspectionBundle.message("display.name.unused.declaration")
 
   private def isElementUsed(element: ScNamedElement, isOnTheFly: Boolean): Boolean = {
-
-    val elementIsOnlyVisibleInLocalFile = isOnlyVisibleInLocalFile(element)
-
-    if (elementIsOnlyVisibleInLocalFile && isOnTheFly) {
-      localSearch(element)
-    } else if (elementIsOnlyVisibleInLocalFile && !isOnTheFly) {
-      referencesSearch(element)
+    if (isReportingDisabledForElement(element)) {
+      true
+    } else if (isOnlyVisibleInLocalFile(element)) {
+      if (isOnTheFly) {
+        localSearch(element)
+      } else {
+        referencesSearch(element)
+      }
     } else if (referencesSearch(element)) {
       true
     } else if (!reportPublicDeclarations.isEnabled(element)) {
@@ -88,6 +113,11 @@ class ScalaUnusedDeclarationInspection extends HighlightingPassInspection {
           textSearch(element)
       }
     }
+  }
+
+  private def isReportingDisabledForElement(element: ScNamedElement): Boolean = element.nameContext match {
+    case m: ScMember if m.isLocal && !reportLocalDeclarations.isEnabled(element) => true
+    case _ => false
   }
 
   // this case is for elements accessible only in a local scope

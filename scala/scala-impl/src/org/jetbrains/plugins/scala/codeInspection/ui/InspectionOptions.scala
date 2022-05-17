@@ -51,14 +51,14 @@ final class InspectionOptions(
 }
 
 object InspectionOptions {
+  val AlwaysEnabled: InspectionOption = InspectionOption(ScalaInspectionBundle.message("inspection.option.enabled"), _ => true)
+  val AlwaysDisabled: InspectionOption = InspectionOption(ScalaInspectionBundle.message("inspection.option.disabled"), _ => false)
+
   def apply(propertyName: String, label: String): InspectionOptions =
     new InspectionOptions(
       propertyName,
       label,
-      Seq(
-        InspectionOption(ScalaInspectionBundle.message("inspection.option.enabled"), _ => true),
-        InspectionOption(ScalaInspectionBundle.message("inspection.option.disabled"), _ => false)
-      )
+      Seq(AlwaysEnabled, AlwaysDisabled)
     )
 
   def apply(propertyName: String, label: String, compilerOptionName: String): InspectionOptions = {
@@ -69,9 +69,9 @@ object InspectionOptions {
       propertyName,
       label,
       Seq(
-        InspectionOption(ScalaInspectionBundle.message("inspection.option.enabled"), _ => true),
+        AlwaysEnabled,
         InspectionOption(ScalaInspectionBundle.message("inspection.option.check.compiler", compilerOptionName), isCompilerOptionEnabled),
-        InspectionOption(ScalaInspectionBundle.message("inspection.option.disabled"), _ => false)
+        AlwaysDisabled
       )
     )
   }
