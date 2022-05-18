@@ -15,6 +15,7 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.imports.usages._
 import java.lang.ref.Reference
 import java.util.concurrent.atomic.AtomicLong
 import java.{util => ju}
+import scala.jdk.CollectionConverters.SetHasAsScala
 
 /**
  * User: Alexander Podkhalyuzin
@@ -52,17 +53,18 @@ final class ScalaRefCountHolder private (file: PsiFile) {
     myImportUsed.contains(used)
   }
 
-  def isValueWriteUsed(element: PsiNamedElement): Boolean = isValueUsed {
-    WriteValueUsed(element)
-  }
-
-  def isValueReadUsed(element: PsiNamedElement): Boolean = isValueUsed {
-    ReadValueUsed(element)
-  }
-
-  private def isValueUsed(used: ValueUsed): Boolean = {
+  def isValueWriteUsed(element: PsiNamedElement): Boolean = {
     assertReady()
-    myValueUsed.contains(used)
+    myValueUsed.asScala.collect {
+      case w: WriteValueUsed if w.pointer.getElement != null => w
+    }.exists(_.pointer.getElement == element)
+  }
+
+  def isValueReadUsed(element: PsiNamedElement): Boolean = {
+    assertReady()
+    myValueUsed.asScala.collect {
+      case r: ReadValueUsed if r.pointer.getElement != null => r
+    }.exists(_.pointer.getElement == element)
   }
 
   def analyze(analyze: Runnable, file: PsiFile): Boolean = {
@@ -93,7 +95,7 @@ final class ScalaRefCountHolder private (file: PsiFile) {
 
   private def cleanIfDirty(file: PsiFile): Unit = {
     val dirtyScope = findDirtyScope(file)
-    val defaultRange = Some(file.getTextRange)
+    lazy val defaultRange = Some(file.getTextRange)
     dirtyScope.getOrElse(defaultRange) match {
       case `defaultRange` =>
         myImportUsed.clear()
@@ -147,7 +149,8 @@ object ScalaRefCountHolder {
                       (isValid: T => Boolean): Unit = used.synchronized {
     val valuesIterator = used.iterator
     while (valuesIterator.hasNext) {
-      if (!isValid(valuesIterator.next)) {
+      val next = valuesIterator.next()
+      if (!isValid(next)) {
         valuesIterator.remove()
       }
     }
