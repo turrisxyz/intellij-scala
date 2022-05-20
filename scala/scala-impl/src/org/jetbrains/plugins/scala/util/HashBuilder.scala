@@ -9,7 +9,6 @@ class HashBuilder(val value: Int) extends AnyVal {
   final def #+(other: Int)     = new HashBuilder(31 * value + other)
   final def #+(other: Boolean) = new HashBuilder(31 * value + other.##)
   final def #+(other: Long)    = new HashBuilder(31 * value + other.##)
-  final def #+(other: Double)  = new HashBuilder(31 * value + other.##)
   final def #+(other: Any)     = new HashBuilder(31 * value + other.##)
 }
 
