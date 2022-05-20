@@ -43,12 +43,12 @@ trait BuildFileModifier {
       modifyInner(module, vfsFileToCopy) match {
         case Some(changes) =>
           if (!needPreviewChanges) {
-            applyChanges(changes, project, vfsFileToCopy)
+            applyChanges(changes, vfsFileToCopy)
             res = true
           } else {
             previewChanges(module.getProject, changes, vfsFileToCopy) match {
               case Some(acceptedChanges) if acceptedChanges.nonEmpty =>
-                applyChanges(acceptedChanges, project, vfsFileToCopy)
+                applyChanges(acceptedChanges, vfsFileToCopy)
                 res = true
               case _ =>
                 res = false
@@ -86,11 +86,11 @@ trait BuildFileModifier {
     val isOk = dialog.showAndGet()
     if (isOk) {
       val selectedChanges = dialog.selectedChanges
-      Some(for (change <- selectedChanges) yield changesToWorkingCopies(change.asInstanceOf[BuildFileChange]))
+      Some(for (change <- selectedChanges) yield changesToWorkingCopies(change))
     } else None
   }
 
-  def applyChanges(changes: List[VirtualFile], project: IJProject, vfsFileToCopy: mutable.Map[VirtualFile,
+  def applyChanges(changes: List[VirtualFile], vfsFileToCopy: mutable.Map[VirtualFile,
       LightVirtualFile]): Unit = {
     val manager = FileDocumentManager.getInstance()
     for ((originalFile, changedFile) <- vfsFileToCopy) {

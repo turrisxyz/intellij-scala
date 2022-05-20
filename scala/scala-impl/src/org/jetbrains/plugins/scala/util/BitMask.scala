@@ -5,6 +5,7 @@ import org.jetbrains.plugins.scala.util.BitMask.bitsNeededToRepresent
 
 import java.lang.{Integer => JInt}
 import scala.collection.immutable.ArraySeq
+import scala.collection.mutable
 import scala.reflect.ClassTag
 import scala.util.hashing.MurmurHash3
 
@@ -119,7 +120,6 @@ trait BitMaskStorage {
   private var usedBits: Int = 0
   private var _members: Map[String, BitMask] = Map.empty
 
-  def mask: Int = usedBits
   def members: Map[String, BitMask] = _members
 
   private def nextPos: Int = bitsNeededToRepresent(usedBits)
@@ -154,7 +154,7 @@ trait BitMaskStorage {
   }
 
   def fingerprintString: String = {
-    val fingerprintBuilder = new StringBuilder
+    val fingerprintBuilder = new mutable.StringBuilder
 
     fingerprintBuilder.append("VersionFields:")
 
