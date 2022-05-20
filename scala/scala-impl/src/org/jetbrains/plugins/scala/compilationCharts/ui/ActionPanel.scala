@@ -41,7 +41,7 @@ class ActionPanel(setZoom: Zoom => Unit, setLevel: Level => Unit)
     panel.add(new JBLabel("Level: "))
     val comboBox = new JComboBox[Level](Level.values())
     comboBox.setFocusable(false)
-    comboBox.addItemListener(e => setLevel(comboBox.getSelectedItem.asInstanceOf[Level]))
+    comboBox.addItemListener(_ => setLevel(comboBox.getSelectedItem.asInstanceOf[Level]))
     panel.add(comboBox)
     panel
   })
