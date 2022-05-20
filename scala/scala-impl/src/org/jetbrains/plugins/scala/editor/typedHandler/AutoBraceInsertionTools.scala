@@ -167,10 +167,6 @@ object AutoBraceInsertionTools {
     if (file.useIndentationBasedSyntax)
       return None
 
-    // ========= Calculate brace positions =========
-    // Start with the opening brace, and then the closing brace.
-    val document = editor.getDocument
-
     // ========= Opening brace =========
     val openingBraceOffset =
       exprWS

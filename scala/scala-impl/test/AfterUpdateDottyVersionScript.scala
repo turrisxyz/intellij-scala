@@ -1,7 +1,5 @@
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.util.io.FileUtilRt
-import com.intellij.platform.templates.github.{DownloadUtil, ZipUtil => GithubZipUtil}
 import com.intellij.pom.java.LanguageLevel
 import junit.framework.{TestCase, TestFailure, TestResult, TestSuite}
 import org.jetbrains.plugins.scala.debugger.ScalaCompilerTestBase
@@ -36,16 +34,16 @@ class AfterUpdateDottyVersionScript
   def testRunAllScripts(): Unit = {
     val tests =
       Script.FromTestCase(classOf[RecompileMacroPrinter3]) #::
-      Script.FromTestCase(classOf[Scala3ImportedParserTest_Import_FromDottyDirectory]) #::
-      Script.FromTestSuite(new Scala3ImportedParserTest_Move_Fixed_Tests.Scala3ImportedParserTest_Move_Fixed_Tests) #::
-      Script.FromTestCase(classOf[Scala3ImportedSemanticDbTest_Import_FromDottyDirectory]) #::
-      Script.FromTestCase(classOf[ReferenceComparisonTestsGenerator_Scala3]) #::
-      Script.FromTestCase(classOf[UpdateScalacOptionsInfo.ScriptTestCase]) #::
+        Script.FromTestCase(classOf[Scala3ImportedParserTest_Import_FromDottyDirectory]) #::
+        Script.FromTestSuite(new Scala3ImportedParserTest_Move_Fixed_Tests.Scala3ImportedParserTest_Move_Fixed_Tests) #::
+        Script.FromTestCase(classOf[Scala3ImportedSemanticDbTest_Import_FromDottyDirectory]) #::
+        Script.FromTestCase(classOf[ReferenceComparisonTestsGenerator_Scala3]) #::
+        Script.FromTestCase(classOf[UpdateScalacOptionsInfo.ScriptTestCase]) #::
         LazyList.empty
     tests.foreach(runScript)
   }
 
-  private def runScript[A](script: Script): Unit = script match {
+  private def runScript(script: Script): Unit = script match {
     case Script.FromTestCase(clazz) =>
       println(s"${clazz.getSimpleName} STARTED")
       val result = new JUnitCore().run(clazz)
@@ -74,19 +72,13 @@ class AfterUpdateDottyVersionScript
 }
 
 object AfterUpdateDottyVersionScript {
+
   import Scala3ImportedParserTest_Move_Fixed_Tests.{dottyParserTestsFailDir, dottyParserTestsSuccessDir}
+
   private val rangesDirectory: String = TestUtils.getTestDataPath + Scala3ImportedParserTest.rangesDirectory
 
-  private def downloadRepository(url: String): File = {
-    val repoFile = newTempFile()
-    DownloadUtil.downloadAtomically(new EmptyProgressIndicator, url, repoFile)
-
-    val repoDir = newTempDir()
-    GithubZipUtil.unzip(null, repoDir, repoFile, null, null, true)
-    repoDir
-  }
-
-  private def cloneRepository(url: String): File = {
+  private def cloneRepository: File = {
+    val url = "https://github.com/lampepfl/dotty/"
     val cloneDir = newTempDir()
     val sc = Process("git" :: "clone" :: url :: "." :: "--depth=1" :: Nil, cloneDir).!
     assert(sc == 0, s"Failed ($sc) to clone $url into $cloneDir")
@@ -166,7 +158,7 @@ object AfterUpdateDottyVersionScript {
 
     def test(): Unit = {
       // we have to clone the repo because it needs a git history
-      val repoPath = cloneRepository("https://github.com/lampepfl/dotty/").toPath
+      val repoPath = cloneRepository.toPath
       val srcDir = repoPath.resolve(Paths.get("tests", "pos")).toAbsolutePath.toString
 
       clearDirectory(dottyParserTestsSuccessDir)
@@ -183,7 +175,7 @@ object AfterUpdateDottyVersionScript {
       tempRangeSourceDir.toFile.mkdirs()
 
       var atLeastOneFileProcessed = false
-      for (file <- allFilesIn(srcDir) if file.toString.toLowerCase.endsWith(".scala"))  {
+      for (file <- allFilesIn(srcDir) if file.toString.toLowerCase.endsWith(".scala")) {
         val target = dottyParserTestsFailDir + file.toString.substring(srcDir.length).replace(".scala", "++++test")
         val content = readFile(file.toPath)
           .replaceAll("[-]{5,}", "+") // <- some test files have comment lines with dashes which confuse junit
@@ -238,7 +230,7 @@ object AfterUpdateDottyVersionScript {
     extends TestCase {
 
     def test(): Unit = {
-      val repoPath = cloneRepository("https://github.com/lampepfl/dotty/").toPath
+      val repoPath = cloneRepository.toPath
 
       clearDirectory(ComparisonTestBase.sourcePath.toString)
       clearDirectory(ComparisonTestBase.outPath.toString)
@@ -350,8 +342,6 @@ object AfterUpdateDottyVersionScript {
 
   //noinspection MutatorLikeMethodIsParameterless
   private def deleteTempFileOnExit = true
-  private def newTempFile(): File =
-    FileUtilRt.createTempFile("imported-dotty-tests", "", deleteTempFileOnExit)
 
   private def newTempDir(): File =
     FileUtilRt.createTempDirectory("imported-dotty-tests", "", deleteTempFileOnExit)
@@ -402,8 +392,8 @@ object AfterUpdateDottyVersionScript {
    * This is done by patching multiple files in the dotty compiler/test source.
    * Most importantly we hook into the main parse function and traverse trees that were created there.
    *
-   * @param repoPath path to the complete dotty source code
-   * @param testFilePath path to a directory that contains all test files
+   * @param repoPath             path to the complete dotty source code
+   * @param testFilePath         path to a directory that contains all test files
    * @param targetRangeDirectory path where the resulting range files are put into
    */
   private def extractRanges(repoPath: Path, testFilePath: Path, targetRangeDirectory: String): Unit = {
@@ -501,8 +491,11 @@ object AfterUpdateDottyVersionScript {
   // We need to replace `\` with `/` (or escape `\` to `\\`) to make files patching work on Windows,
   // otherwise source file will interpret backslash as an invalid escape sequence in `C:\Users\user`
   private def normalisedPathSeparator1(path: Path): String = normalisedPathSeparator1(path.toString)
+
   private def normalisedPathSeparator1(path: String)(implicit d: DummyImplicit): String = path.replace("\\", "/")
+
   private def normalisedPathSeparator2(path: Path): String = normalisedPathSeparator2(path.toString)
+
   private def normalisedPathSeparator2(path: String)(implicit d: DummyImplicit): String = path.replace("\\", "\\\\")
 
   private def patchFile(path: Path, searchString0: String, replacement0: String): Unit = {

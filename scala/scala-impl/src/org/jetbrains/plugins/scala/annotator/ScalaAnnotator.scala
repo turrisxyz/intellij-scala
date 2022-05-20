@@ -89,8 +89,8 @@ class ScalaAnnotator extends Annotator
 
         if (isAdvancedHighlightingEnabled(element)) {
           expr.getTypeAfterImplicitConversion() match {
-            case ExpressionTypeResult(Right(t), _, Some(implicitFunction)) =>
-              highlightImplicitView(expr, implicitFunction.element, t, expr)
+            case ExpressionTypeResult(Right(_), _, Some(_)) =>
+              highlightImplicitView(expr)
             case _ =>
           }
         }
@@ -308,7 +308,7 @@ class ScalaAnnotator extends Annotator
   def checkTemplateParentsVariance(parents: ScTemplateParents)
                                   (implicit holder: ScalaAnnotationHolder): Unit = {
     for (typeElement <- parents.typeElements) {
-      if (!childHasAnnotation(Some(typeElement), "uncheckedVariance") && !parents.parent.flatMap(_.parent).exists(_.isInstanceOf[ScNewTemplateDefinition]))
+      if (!childHasAnnotation(Some(typeElement), "uncheckedVariance") && !parents.parent.flatMap(_.parent).exists(_.is[ScNewTemplateDefinition]))
         checkTypeVariance(typeElement, Covariant, typeElement, parents)
     }
   }
@@ -350,20 +350,20 @@ class ScalaAnnotator extends Annotator
       if (positionV != elementV && elementV != Invariant) {
         val typePName = typeParam.toString
         val pos =
-          if (toHighlight.isInstanceOf[ScVariable]) toHighlight.getText + "_="
+          if (toHighlight.is[ScVariable]) toHighlight.getText + "_="
           else toHighlight.getText
-        val isMethod = toHighlight.isInstanceOf[ScFunction] // "method" else "value"
+        val isMethod = toHighlight.is[ScFunction] // "method" else "value"
         val elementVariance = elementV.name
         val posVariance = positionV.name
 
         val message = (elementVariance, posVariance, isMethod) match {
-          case ("covariant", "invariant", true)      => ScalaBundle.message("covariant.type.invariant.position.of.method", name, typePName, pos)
-          case ("covariant", "invariant", false)     => ScalaBundle.message("covariant.type.invariant.position.of.value", name, typePName, pos)
-          case ("covariant", "contravariant", true)  => ScalaBundle.message("covariant.type.contravariant.position.of.method", name, typePName, pos)
+          case ("covariant", "invariant", true) => ScalaBundle.message("covariant.type.invariant.position.of.method", name, typePName, pos)
+          case ("covariant", "invariant", false) => ScalaBundle.message("covariant.type.invariant.position.of.value", name, typePName, pos)
+          case ("covariant", "contravariant", true) => ScalaBundle.message("covariant.type.contravariant.position.of.method", name, typePName, pos)
           case ("covariant", "contravariant", false) => ScalaBundle.message("covariant.type.contravariant.position.of.value", name, typePName, pos)
-          case ("contravariant", "invariant", true)  => ScalaBundle.message("contravariant.type.invariant.position.of.method", name, typePName, pos)
+          case ("contravariant", "invariant", true) => ScalaBundle.message("contravariant.type.invariant.position.of.method", name, typePName, pos)
           case ("contravariant", "invariant", false) => ScalaBundle.message("contravariant.type.invariant.position.of.value", name, typePName, pos)
-          case ("contravariant", "covariant", true)  => ScalaBundle.message("contravariant.type.covariant.position.of.method", name, typePName, pos)
+          case ("contravariant", "covariant", true) => ScalaBundle.message("contravariant.type.covariant.position.of.method", name, typePName, pos)
           case ("contravariant", "covariant", false) => ScalaBundle.message("contravariant.type.covariant.position.of.value", name, typePName, pos)
           case _ => ???
         }
@@ -381,18 +381,19 @@ class ScalaAnnotator extends Annotator
               val compareTo = scTypeParam.owner
               val parentIt = checkParentOf.parents
               //if it's a function inside function we do not highlight it unless trait or class is defined inside this function
-              parentIt.find(e => e == compareTo || e.isInstanceOf[ScFunction]) match {
+              parentIt.find(e => e == compareTo || e.is[ScFunction]) match {
                 case Some(_: ScFunction) =>
                 case _ =>
                   def findVariance: Variance = {
                     if (!checkIfTypeIsInSameBrackets) return v
                     if (PsiTreeUtil.isAncestor(scTypeParam.getParent, toHighlight, false))
                     //we do not highlight element if it was declared inside parameterized type.
-                      if (!scTypeParam.getParent.getParent.isInstanceOf[ScTemplateDefinition]) return scTypeParam.variance
+                      if (!scTypeParam.getParent.getParent.is[ScTemplateDefinition]) return scTypeParam.variance
                       else return -v
                     if (toHighlight.getParent == scTypeParam.getParent.getParent) return -v
                     v
                   }
+
                   highlightVarianceError(scTypeParam.variance, findVariance, paramType.name)
               }
             case _ =>
@@ -401,6 +402,7 @@ class ScalaAnnotator extends Annotator
       }
       ProcessSubtypes
     }
+
     typeParam.recursiveVarianceUpdate(variance)(functionToSendIn)
   }
 }
@@ -463,7 +465,7 @@ object ScalaAnnotator {
     }
 
     val ignored = ignoredRanges()
-    if (ignored.isEmpty || element.isInstanceOf[PsiFile]) false
+    if (ignored.isEmpty || element.is[PsiFile]) false
     else {
       val noCommentWhitespace = element.children.find {
         case _: PsiComment | _: PsiWhiteSpace => false

@@ -26,7 +26,6 @@ import org.jetbrains.plugins.scala.lang.psi.impl.ScalaPsiElementFactory
 import org.jetbrains.plugins.scala.lang.psi.impl.expr.{ScInterpolatedExpressionPrefix, ScInterpolatedPatternPrefix}
 import org.jetbrains.plugins.scala.lang.psi.impl.toplevel.synthetic.ScSyntheticFunction
 import org.jetbrains.plugins.scala.lang.psi.types._
-import org.jetbrains.plugins.scala.lang.psi.types.api.Any
 import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.Parameter
 import org.jetbrains.plugins.scala.lang.resolve.{ReferenceExpressionResolver, ScalaResolveResult}
 import org.jetbrains.plugins.scala.lang.scaladoc.parser.parsing.MyScaladocParsing
@@ -52,8 +51,7 @@ object ScReferenceAnnotator extends ElementAnnotator[ScReference] {
         case Some(_) => checkQualifiedReferenceElement(element, typeAware)
       }
 
-  def annotateReference(reference: ScReference, inDesugaring: Boolean = false)
-                       (implicit holder: ScalaAnnotationHolder): Unit = {
+  def annotateReference(reference: ScReference)(implicit holder: ScalaAnnotationHolder): Unit = {
     val results = reference.multiResolveScala(false)
 
     if (results.length > 1) {
@@ -71,7 +69,7 @@ object ScReferenceAnnotator extends ElementAnnotator[ScReference] {
 
       if (!r.isApplicable()) {
         targetElement match {
-          case f @ (_: ScFunction | _: PsiMethod | _: ScSyntheticFunction) =>
+          case f@(_: ScFunction | _: PsiMethod | _: ScSyntheticFunction) =>
             refContext match {
               case _: ScGenericCall =>
               case _: MethodInvocation =>
@@ -94,8 +92,8 @@ object ScReferenceAnnotator extends ElementAnnotator[ScReference] {
   }
 
   /**
-    * Annotates: val a = 1; a += 1;
-    */
+   * Annotates: val a = 1; a += 1;
+   */
   private def annotateAssignmentReference(reference: ScReference)
                                          (implicit holder: ScalaAnnotationHolder): Unit = {
     val qualifier = reference.getContext match {
@@ -159,7 +157,7 @@ object ScReferenceAnnotator extends ElementAnnotator[ScReference] {
           }
         case _ =>
           parent match {
-            case ScInfixPattern(_, `refElement`, _) if refElement.isInstanceOf[ScStableCodeReference] => // todo: this is hide A op B in patterns
+            case ScInfixPattern(_, `refElement`, _) if refElement.is[ScStableCodeReference] => // todo: this is hide A op B in patterns
             case _: ScImportSelector if resolve.length > 0 =>
             case _: ScDocTag =>
               holder.createWeakWarningAnnotation(refElement, ScalaBundle.message("cannot.resolve", refElement.refName))
@@ -198,6 +196,7 @@ object ScReferenceAnnotator extends ElementAnnotator[ScReference] {
                         case _ => check(neighbour.getPrevSibling)
                       }
                     }
+
                     if (check(neighbour)) showError()
                   }
               }
@@ -212,22 +211,16 @@ object ScReferenceAnnotator extends ElementAnnotator[ScReference] {
     if (resolve.length == 1) {
       val resolveResult = resolve(0)
       refElement match {
-        case e: ScReferenceExpression if e.getParent.isInstanceOf[ScPrefixExpr] &&
+        case e: ScReferenceExpression if e.getParent.is[ScPrefixExpr] &&
           e.getParent.asInstanceOf[ScPrefixExpr].operation == e =>
           resolveResult.implicitFunction match {
-            case Some(fun) =>
-              val pref = e.getParent.asInstanceOf[ScPrefixExpr]
-              val expr = pref.operand
-              highlightImplicitMethod(expr, resolveResult, refElement, fun)
+            case Some(_) => highlightImplicitMethod(refElement)
             case _ =>
           }
-        case e: ScReferenceExpression if e.getParent.isInstanceOf[ScInfixExpr] &&
+        case e: ScReferenceExpression if e.getParent.is[ScInfixExpr] &&
           e.getParent.asInstanceOf[ScInfixExpr].operation == e =>
           resolveResult.implicitFunction match {
-            case Some(fun) =>
-              val inf = e.getParent.asInstanceOf[ScInfixExpr]
-              val expr = inf.getBaseExpr
-              highlightImplicitMethod(expr, resolveResult, refElement, fun)
+            case Some(_) => highlightImplicitMethod(refElement)
             case _ =>
           }
         case _ =>
@@ -235,7 +228,7 @@ object ScReferenceAnnotator extends ElementAnnotator[ScReference] {
     }
 
     def isOnTopLevel(element: PsiElement) = element match {
-      case scalaPsi: ScalaPsiElement => !scalaPsi.parents.exists(_.isInstanceOf[ScTypeDefinition])
+      case scalaPsi: ScalaPsiElement => !scalaPsi.parents.exists(_.is[ScTypeDefinition])
       case _ => false
     }
 
@@ -250,9 +243,10 @@ object ScReferenceAnnotator extends ElementAnnotator[ScReference] {
 
     if (typeAware && resolve.length != 1 && !(refElement.containingScalaFile.exists(_.isMultipleDeclarationsAllowed) && isTopLevelResolve)) {
       val parent = refElement.getParent
+
       def addCreateApplyOrUnapplyFix(errorWithRefName: String => String, fix: ScTypeDefinition => IntentionAction): Boolean = {
         val refWithoutArgs = ScalaPsiElementFactory.createReferenceFromText(refElement.getText, parent.getContext, parent)
-        if (refWithoutArgs != null && refWithoutArgs.multiResolveScala(false).exists(!_.getElement.isInstanceOf[PsiPackage])) {
+        if (refWithoutArgs != null && refWithoutArgs.multiResolveScala(false).exists(!_.getElement.is[PsiPackage])) {
           // We can't resolve the method call A(arg1, arg2), but we can resolve A. Highlight this differently.
           val message = errorWithRefName(refElement.refName)
           val typeDefFix = refWithoutArgs match {
@@ -294,7 +288,7 @@ object ScReferenceAnnotator extends ElementAnnotator[ScReference] {
   }
 
   private def createUnknownSymbolProblem(reference: ScReference)
-                                        (implicit holder: ScalaAnnotationHolder) = {
+                                        (implicit holder: ScalaAnnotationHolder): Unit = {
     val identifier = reference.nameId
     val fixes =
       UnresolvedReferenceFixProvider.fixesFor(reference) :+
@@ -318,15 +312,12 @@ object ScReferenceAnnotator extends ElementAnnotator[ScReference] {
     if (refElement.isInstanceOf[ScExpression] && resolveCount == 1) {
       val resolveResult = resolve(0)
       resolveResult.implicitFunction match {
-        case Some(fun) =>
-          val qualifier = refElement.qualifier.get
-          val expr = qualifier.asInstanceOf[ScExpression]
-          highlightImplicitMethod(expr, resolveResult, refElement, fun)
+        case Some(_) => highlightImplicitMethod(refElement)
         case _ =>
       }
     }
 
-    if (refElement.isInstanceOf[ScDocResolvableCodeReference] && resolveCount > 0 || refElement.isSoft) return
+    if (refElement.is[ScDocResolvableCodeReference] && resolveCount > 0 || refElement.isSoft) return
     if (typeAware && resolveCount != 1) {
 
       refElement.getParent match {
@@ -339,11 +330,11 @@ object ScReferenceAnnotator extends ElementAnnotator[ScReference] {
     }
   }
 
-  def nameWithSignature(f: PsiNamedElement) = nameOf(f) + signatureOf(f)
+  def nameWithSignature(f: PsiNamedElement): String = nameOf(f) + signatureOf(f)
 
   private def nameOf(f: PsiNamedElement) = f match {
     case m: ScMethodLike if m.isConstructor => m.containingClass.name
-    case _                                  => f.name
+    case _ => f.name
   }
 
   private def signatureOf(f: PsiNamedElement): String = {
@@ -362,17 +353,18 @@ object ScReferenceAnnotator extends ElementAnnotator[ScReference] {
   private def formatParamClauses(paramClauses: ScParameters)(implicit tpc: TypePresentationContext) = {
     def formatParams(parameters: Seq[ScParameter], types: Seq[ScType]) = {
       val parts = parameters.zip(types).map {
-        case (p, t) => t.presentableText + (if(p.isRepeatedParameter) "*" else "")
+        case (p, t) => t.presentableText + (if (p.isRepeatedParameter) "*" else "")
       }
       parenthesise(parts)
     }
+
     paramClauses.clauses.map(clause => formatParams(clause.parameters, clause.paramTypes)).mkString
   }
 
   private def formatJavaParams(parameters: Seq[PsiParameter])(implicit tpc: TypePresentationContext): String = {
     val types = parameters.map(_.paramType())
     val parts = parameters.zip(types).map {
-      case (p, t) => t.presentableText + (if(p.isVarArgs) "*" else "")
+      case (p, t) => t.presentableText + (if (p.isVarArgs) "*" else "")
     }
     parenthesise(parts)
   }
@@ -386,19 +378,12 @@ object ScReferenceAnnotator extends ElementAnnotator[ScReference] {
 
   private def parenthesise(items: Seq[_]) = items.mkString("(", ", ", ")")
 
-  private def highlightImplicitMethod(expr: ScExpression, resolveResult: ScalaResolveResult, refElement: ScReference,
-                                      fun: PsiNamedElement)
-                                     (implicit holder: ScalaAnnotationHolder): Unit = {
-    val typeTo = resolveResult.implicitType match {
-      case Some(tp) => tp
-      case _ => Any(expr.projectContext)
-    }
-    highlightImplicitView(expr, fun, typeTo, refElement.nameId)
-  }
+  private def highlightImplicitMethod(refElement: ScReference)(implicit holder: ScalaAnnotationHolder): Unit =
+    highlightImplicitView(refElement.nameId)
 
   private def checkAccessForReference(resolve: Array[ScalaResolveResult], refElement: ScReference)
                                      (implicit holder: ScalaAnnotationHolder): Unit = {
-    if (resolve.length != 1 || refElement.isSoft || refElement.isInstanceOf[ScDocResolvableCodeReference]) return
+    if (resolve.length != 1 || refElement.isSoft || refElement.is[ScDocResolvableCodeReference]) return
     resolve(0) match {
       case r if !r.isAccessible =>
         val error = ScalaBundle.message("symbol.is.inaccessible.from.this.place", r.element.name)

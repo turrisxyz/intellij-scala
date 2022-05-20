@@ -12,7 +12,7 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.{PsiFile, PsiManager}
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import org.jetbrains.plugins.scala.annotator.{AnnotatorHolderMock, Message, ScalaAnnotator}
-import org.jetbrains.plugins.scala.extensions.PsiElementExt
+import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiElementExt}
 import org.jetbrains.plugins.scala.finder.SourceFilterScope
 import org.jetbrains.plugins.scala.lang.psi.api.{ScalaFile, ScalaPsiElement}
 import org.jetbrains.plugins.scala.projectHighlighting.AllProjectHighlightingTest.relativePathOf
@@ -24,9 +24,9 @@ import scala.util.control.NonFatal
 import scala.util.matching.Regex
 
 /**
-  * @author Mikhail Mutcianko
-  * @since 30.08.16
-  */
+ * @author Mikhail Mutcianko
+ * @since 30.08.16
+ */
 trait AllProjectHighlightingTest {
 
   def getProject: Project
@@ -49,7 +49,7 @@ trait AllProjectHighlightingTest {
 
     val size: Int = files.size
 
-    for ((file, index) <- files.zipWithIndex if !shouldSkip(file.getName)) {
+    for ((file, index) <- files.zipWithIndex) {
       val psiFile = fileManager.findFile(file)
 
       reporter.updateHighlightingProgress(percent(index, size), file.getName)
@@ -66,8 +66,6 @@ trait AllProjectHighlightingTest {
   }
 
   protected def scalaFileTypes: Seq[FileType] = Seq(ScalaFileType.INSTANCE)
-
-  def shouldSkip(fileName: String): Boolean = false
 
   private def percent(index: Int, size: Int): Int = (index + 1) * 100 / size
 
@@ -104,7 +102,7 @@ object AllProjectHighlightingTest {
   def annotateScalaFile(file: PsiFile, reporter: ProgressReporter, relPath: Option[String] = None): Unit = {
     val scalaFile = file.getViewProvider.getPsi(ScalaLanguage.INSTANCE) match {
       case f: ScalaFile => f
-      case _            => return
+      case _ => return
     }
 
 
@@ -125,7 +123,7 @@ object AllProjectHighlightingTest {
 
     val annotator = ScalaAnnotator.forProject(scalaFile)
 
-    val elements = scalaFile.depthFirst().filter(_.isInstanceOf[ScalaPsiElement]).toSeq
+    val elements = scalaFile.depthFirst().filter(_.is[ScalaPsiElement]).toSeq
     val elementsShuffled = random.shuffle(elements)
     for (element <- elementsShuffled) {
       try {

@@ -97,9 +97,9 @@ abstract class ApplicabilityTestBase extends SimpleTestCase {
 
   def assertProblemsConstructor(auxiliary: String, definition: String, application: String)
                                (pattern: PartialFunction[scala.List[ApplicabilityProblem], Unit]): Unit = {
-    val typified = typify(definition, application)
     assertProblemsAre(auxiliary, formatConstructor(definition, application))(pattern)
     // TODO Uncomment and solve problems with primary constructors substitutors
+    //    val typified = typify(definition, application)
     //    assertProblemsAre(auxiliary, formatConstructor(typified._1, typified._2))((pattern))
   }
 
@@ -139,7 +139,7 @@ abstract class ApplicabilityTestBase extends SimpleTestCase {
 
     val id = ids.iterator
     val typedDefinition = Parameter.replaceAllIn(definition, _ match {
-      case Parameter(n, t) => n + ": " + id.next()
+      case Parameter(n, _) => n + ": " + id.next()
     })
     
     val typeParameters = "[" + ids.mkString(", ") + "]"

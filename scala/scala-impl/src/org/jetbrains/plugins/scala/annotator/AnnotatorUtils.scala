@@ -4,7 +4,7 @@ package annotator
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.{PsiElement, PsiErrorElement, PsiFile, PsiNamedElement}
+import com.intellij.psi.{PsiElement, PsiErrorElement, PsiFile}
 import org.jetbrains.plugins.scala.annotator.template.kindOf
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.highlighter.DefaultHighlighter
@@ -24,7 +24,7 @@ import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
 
 /**
  * @author Aleksander Podkhalyuzin
- * Date: 25.03.2009
+ *         Date: 25.03.2009
  */
 
 // TODO move to org.jetbrains.plugins.scala.lang.psi.annotator
@@ -38,7 +38,7 @@ object AnnotatorUtils {
       return
     }
 
-    expression.getTypeAfterImplicitConversion().tr.foreach {actual =>
+    expression.getTypeAfterImplicitConversion().tr.foreach { actual =>
       val expected = typeElement.calcType
       if (!actual.conforms(expected) && !shouldIgnoreTypeMismatchIn(expression)) {
         TypeMismatchError.register(expression, expected, actual, blockLevel = 1) { (expected, actual) =>
@@ -50,19 +50,19 @@ object AnnotatorUtils {
 
   def shouldIgnoreTypeMismatchIn(e: PsiElement, fromFunctionLiteral: Boolean = false): Boolean = {
     // Don't show type a mismatch error when there's a parser error, SCL-16899, SCL-17206
-    def hasParserErrors = e.elements.exists(_.isInstanceOf[PsiErrorElement]) ||
-      e.getPrevSibling.isInstanceOf[PsiErrorElement] ||
-      e.getNextSibling.isInstanceOf[PsiErrorElement] ||
-      e.getNextSibling.isInstanceOf[LeafPsiElement] && e.getNextSibling.textMatches(".") && e.getNextSibling.getNextSibling.isInstanceOf[PsiErrorElement] ||
+    def hasParserErrors = e.elements.exists(_.is[PsiErrorElement]) ||
+      e.getPrevSibling.is[PsiErrorElement] ||
+      e.getNextSibling.is[PsiErrorElement] ||
+      e.getNextSibling.is[LeafPsiElement] && e.getNextSibling.textMatches(".") && e.getNextSibling.getNextSibling.is[PsiErrorElement] ||
       e.parent.exists { parent =>
-        e == parent.getFirstChild && parent.getPrevSibling.isInstanceOf[PsiErrorElement] ||
-          e == parent.getLastChild && parent.getNextSibling.isInstanceOf[PsiErrorElement]
+        e == parent.getFirstChild && parent.getPrevSibling.is[PsiErrorElement] ||
+          e == parent.getLastChild && parent.getNextSibling.is[PsiErrorElement]
       }
 
     // Most often it's an incomplete if-then-else, SCL-18862
     def isIfThen: Boolean = e match {
       case it: ScIf => it.elseExpression.isEmpty
-      case _ => false  
+      case _ => false
     }
 
     // Most often it's an incomplete case clause, SCL-19447
@@ -129,10 +129,10 @@ object AnnotatorUtils {
   }
 
   /**
-    * This method will return checked conformance if it's possible to check it.
-    * In other way it will return true to avoid red code.
-    * Check conformance in case l = r.
-    */
+   * This method will return checked conformance if it's possible to check it.
+   * In other way it will return true to avoid red code.
+   * Check conformance in case l = r.
+   */
   def smartCheckConformance(l: TypeResult, r: TypeResult): Boolean = {
     val leftType = l match {
       case Right(res) => res
@@ -146,9 +146,7 @@ object AnnotatorUtils {
   }
 
   // TODO encapsulate
-  def highlightImplicitView(expr: ScExpression, fun: PsiNamedElement, typeTo: ScType,
-                            elementToHighlight: PsiElement)
-                           (implicit holder: ScalaAnnotationHolder): Unit = {
+  def highlightImplicitView(elementToHighlight: PsiElement)(implicit holder: ScalaAnnotationHolder): Unit = {
     if (ScalaProjectSettings.getInstance(elementToHighlight.getProject).isShowImplicitConversions) {
       holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
         .range(elementToHighlight.getTextRange)
@@ -179,25 +177,25 @@ object AnnotatorUtils {
     problems: Seq[ApplicabilityProblem],
     currentFile: PsiFile
   ): Seq[ApplicabilityProblem] = problems.filter {
-    case PositionalAfterNamedArgument(argument)      => inSameFile(argument, currentFile)
+    case PositionalAfterNamedArgument(argument) => inSameFile(argument, currentFile)
     case ParameterSpecifiedMultipleTimes(assignment) => inSameFile(assignment, currentFile)
-    case UnresolvedParameter(assignment)             => inSameFile(assignment, currentFile)
-    case ExpansionForNonRepeatedParameter(argument)  => inSameFile(argument, currentFile)
-    case ExcessArgument(argument)                    => inSameFile(argument, currentFile)
-    case MissedParametersClause(clause)              => inSameFile(clause, currentFile)
-    case TypeMismatch(expression, _)                 => inSameFile(expression, currentFile)
-    case ExcessTypeArgument(argument)                => inSameFile(argument, currentFile)
-    case MalformedDefinition(_)                      => true
-    case DoesNotTakeParameters                       => true
-    case MissedValueParameter(_)                     => true
-    case DefaultTypeParameterMismatch(_, _)          => true
-    case WrongTypeParameterInferred                  => true
-    case DoesNotTakeTypeParameters                   => true
-    case MissedTypeParameter(_)                      => true
-    case ExpectedTypeMismatch                        => true
-    case NotFoundImplicitParameter(_)                => true
-    case AmbiguousImplicitParameters(_)              => true
-    case IncompleteCallSyntax(_)                     => true
-    case InternalApplicabilityProblem(_)             => true
+    case UnresolvedParameter(assignment) => inSameFile(assignment, currentFile)
+    case ExpansionForNonRepeatedParameter(argument) => inSameFile(argument, currentFile)
+    case ExcessArgument(argument) => inSameFile(argument, currentFile)
+    case MissedParametersClause(clause) => inSameFile(clause, currentFile)
+    case TypeMismatch(expression, _) => inSameFile(expression, currentFile)
+    case ExcessTypeArgument(argument) => inSameFile(argument, currentFile)
+    case MalformedDefinition(_) => true
+    case DoesNotTakeParameters => true
+    case MissedValueParameter(_) => true
+    case DefaultTypeParameterMismatch(_, _) => true
+    case WrongTypeParameterInferred => true
+    case DoesNotTakeTypeParameters => true
+    case MissedTypeParameter(_) => true
+    case ExpectedTypeMismatch => true
+    case NotFoundImplicitParameter(_) => true
+    case AmbiguousImplicitParameters(_) => true
+    case IncompleteCallSyntax(_) => true
+    case InternalApplicabilityProblem(_) => true
   }
 }
