@@ -72,9 +72,7 @@ abstract class DependencyManagerBase {
        |</dependency>
      """.stripMargin
   }
-
-  protected def customizeIvySettings(settings: IvySettings): Unit = ()
-
+  
   protected def createLogger: MessageLogger = new DefaultMessageLogger(logLevel)
 
   private def resolveIvy(deps: Seq[DependencyDescription]): Seq[ResolvedDependency] = {
@@ -128,7 +126,6 @@ abstract class DependencyManagerBase {
         resolver.setSettings(ivySettings)
       }
       ivySettings.configureDefaultVersionMatcher()
-      customizeIvySettings(ivySettings)
       ivySettings
     }
 
@@ -269,7 +266,6 @@ object DependencyManagerBase {
     def %(version: String): DependencyDescription = copy(version = version)
     def %(kind: Type): DependencyDescription = copy(kind = kind)
     def sources(): DependencyDescription = copy(kind = Types.SRC)
-    def configuration(conf: String): DependencyDescription = copy(conf = conf)
     def transitive(): DependencyDescription = copy(isTransitive = true)
     def exclude(patterns: String*): DependencyDescription = copy(excludes = patterns)
     override def toString: String = s"$org:$artId:$version"

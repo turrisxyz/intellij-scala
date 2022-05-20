@@ -53,11 +53,6 @@ object Dependency {
     }
   }
 
-  def dependenciesIn(scope: PsiElement): Seq[Dependency] = scope.depthFirst()
-    .filterByType[ScReference]
-    .toList
-    .flatMap(dependenciesFor)
-
   def dependenciesFor(reference: ScReference): List[Dependency] =
     fastResolve(reference).flatMap { result =>
       dependencyFor(reference, result.element, result.fromType)
@@ -183,7 +178,7 @@ object Dependency {
           case (method: PsiMember) && ContainingClass(e: PsiClass)
             if method.getModifierList.hasModifierProperty("static") =>
             create(e, Some(method.getName))
-          case (member: PsiMember) && ContainingClass(e: PsiClass) =>
+          case (member: PsiMember) && ContainingClass(_: PsiClass) =>
             fromType.flatMap(_.extractClass) match {
               case Some(entity: ScObject) =>
                 val memberName = member match {

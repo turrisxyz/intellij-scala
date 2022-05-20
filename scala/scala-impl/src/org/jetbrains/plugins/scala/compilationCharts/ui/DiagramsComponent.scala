@@ -7,7 +7,7 @@ import com.intellij.ui.components.{JBPanelWithEmptyText, JBScrollPane}
 import com.intellij.util.ui.StartupUiUtil
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.scala.compilationCharts.ui.Common._
-import org.jetbrains.plugins.scala.compilationCharts.{CompilationProgressStateManager, CompileServerMetricsStateManager, Memory}
+import org.jetbrains.plugins.scala.compilationCharts.{CompilationProgressStateManager, CompileServerMetricsStateManager}
 import org.jetbrains.plugins.scala.extensions.{ObjectExt, invokeLater}
 
 import java.awt._
@@ -82,7 +82,7 @@ class DiagramsComponent(chartsComponent: CompilationChartsComponent,
         }
         else {
           //language=HTML
-          s"<pre>${moduleName} (${stringifyForSegmentTooltip(segment)})</pre>"
+          s"<pre>$moduleName (${stringifyForSegmentTooltip(segment)})</pre>"
         }
         setToolTipText(tooltipText)
       }
@@ -288,18 +288,6 @@ object DiagramsComponent {
       .flatMap(_.asOptionOf[UIThemeBasedLookAndFeelInfo])
       .exists(_.getTheme.isDark) || StartupUiUtil.isUnderDarcula
 
-  def stringify(bytes: Memory, showMb: Boolean): String = {
-    val megabytes = toMegabytes(bytes)
-    val suffix = if (showMb) " MB" else ""
-    s"$megabytes$suffix"
-  }
-
-  def smartRound(bytes: Memory): Memory =
-    (toMegabytes(bytes).toDouble / 100).round * 100 * 1024 * 1024
-
-  private def toMegabytes(bytes: Memory): Long =
-    math.round(bytes.toDouble / 1024 / 1024)
-
   private def stringifyForAxisLabel(duration: FiniteDuration): String = {
     val minutes = duration.toMinutes
     val seconds = duration.toSeconds % 60
@@ -334,7 +322,7 @@ object DiagramsComponent {
     val seconds = (duration.toSeconds % 60).toInt
     val millis = (duration.toMillis % 1000).toInt
 
-    val builder = new StringBuilder
+    val builder = new mutable.StringBuilder
 
     if (hours > 0) builder.append(hours).append(" h ")
     if (minutes > 0) builder.append(minutes).append(" m ")

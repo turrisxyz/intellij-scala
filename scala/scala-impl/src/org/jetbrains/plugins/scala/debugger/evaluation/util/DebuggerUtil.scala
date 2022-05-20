@@ -49,10 +49,6 @@ object DebuggerUtil {
       buffer += evaluator
     }
 
-    def append(name: Char): Unit = {
-      append(Character.toString(name))
-    }
-
     def append(text: String): Unit = {
       buffer += JVMNameUtil.getJVMRawText(text)
     }
@@ -141,7 +137,7 @@ object DebuggerUtil {
     }
   }
 
-  def getJVMStringForType(tp: ScType, isParam: Boolean = true): String = {
+  def getJVMStringForType(tp: ScType, isParam: Boolean): String = {
     val stdTypes = tp.projectContext.stdTypes
     import stdTypes._
 
@@ -161,9 +157,9 @@ object DebuggerUtil {
       case Double => "D"
       case Unit if isParam => "Lscala/runtime/BoxedUnit;"
       case Unit => "V"
-      case JavaArrayType(arg) => "[" + getJVMStringForType(arg)
+      case JavaArrayType(arg) => "[" + getJVMStringForType(arg, isParam = true)
       case ParameterizedType(ScDesignatorType(clazz: PsiClass), Seq(arg))
-        if clazz.qualifiedName == "scala.Array" => "[" + getJVMStringForType(arg)
+        if clazz.qualifiedName == "scala.Array" => "[" + getJVMStringForType(arg, isParam = true)
       case _ =>
         tp.extractClass match {
           case Some(obj: ScObject) => "L" + obj.getQualifiedNameForDebugger.replace('.', '/') + "$;"
@@ -250,7 +246,7 @@ object DebuggerUtil {
     case p: ScParameter if p.isRepeatedParameter =>
       if (p.newCollectionsFramework) "Lscala/collection/immutable/Seq;" else "Lscala/collection/Seq;"
     case p: ScParameter if p.isCallByNameParameter => "Lscala/Function0;"
-    case _ => getJVMStringForType(subst(param.`type`().getOrAny))
+    case _ => getJVMStringForType(subst(param.`type`().getOrAny), isParam = true)
   }
 
   class JVMClassAt(sourcePosition: SourcePosition) extends JVMName {
