@@ -54,11 +54,6 @@ object FormatterUtil {
     String.format("%1$" + indentSize + "s", " ")
   }
 
-  def isCommentGrabbingPsi(element: PsiElement): Boolean = element match {
-    case _: ScValue | _: ScVariable | _: ScFunction | _: ScTypeDefinition | _: ScTypeAlias => true
-    case _ => false
-  }
-
   def isDocWhiteSpace(element: PsiElement): Boolean = isDocWhiteSpace(element.getNode)
   def isDocWhiteSpace(node: ASTNode): Boolean = node.getElementType == ScalaDocTokenType.DOC_WHITESPACE
 }

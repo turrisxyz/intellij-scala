@@ -233,8 +233,6 @@ class FormattedStringParserTest extends ScalaLightCodeInsightFixtureTestAdapter 
       case Injection(_, Some(Specifier(Span(_, 1, 5), "%##d"))) :: Nil =>
     }
 
-    //unbound
-    val FNil: PartialFunction[List[StringPart], Unit] = { case Nil => }
     assertMatches(parseFull(""""%".format()""")) { case UnboundSpecifier(Specifier(Span(_, 1, 2), "%")) :: Nil => }
     assertMatches(parseFull(""""%  d".format()""")){ case UnboundSpecifier(Specifier(Span(_, 1, 5), "%  d")) :: Nil => }
   }
@@ -250,7 +248,7 @@ class FormattedStringParserTest extends ScalaLightCodeInsightFixtureTestAdapter 
 
   /** @param stringWithFormatCall example: "%d".format(1) */
   private def parseFull(stringWithFormatCall: String): List[StringPart] =
-    parseFullOpt(stringWithFormatCall).getOrElse(fail(s"can't parse parts of literal: ${stringWithFormatCall}").asInstanceOf[Nothing])
+    parseFullOpt(stringWithFormatCall).getOrElse(fail(s"can't parse parts of literal: $stringWithFormatCall").asInstanceOf[Nothing])
 
   private def parseFullOpt(stringWithFormatCall: String): Option[List[StringPart]] = {
     implicit val project: Project = this.getProject
