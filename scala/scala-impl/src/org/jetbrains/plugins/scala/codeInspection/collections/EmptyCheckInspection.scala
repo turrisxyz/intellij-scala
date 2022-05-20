@@ -58,7 +58,7 @@ object CheckNonEmpty extends SimplificationType {
 
   override def getSimplification(expr: ScExpression): Option[Simplification] = expr match {
     // TODO infix notation?
-    case `.nonEmpty`(qual) => None
+    case `.nonEmpty`(_) => None
     case CheckNonEmpty(qual, start, end) if !isOption(qual) && !isArray(qual) =>
       Some(replace(expr).withText(invocationText(qual, "nonEmpty")).highlightRange(start, end))
     case _ => None
@@ -71,8 +71,8 @@ object CheckNonEmpty extends SimplificationType {
       case `.sizeOrLength`(qual) `!=` literal("0") => Some((qual, qual.end, expr.end))
       case `.sizeOrLength`(qual) `>` literal("0") => Some((qual, qual.end, expr.end))
       case `.sizeOrLength`(qual) `>=` literal("1") => Some((qual, qual.end, expr.end))
-      case qual`.exists`(ScFunctionExpr(_, Some(literal("true")))) => Some((qual, qual.end, expr.end))
-      case qual`.exists`(ScMethodCall(f: ScReferenceExpression, Seq(literal("true")))) if isConstFunction(f) =>
+      case qual`.exists` ScFunctionExpr(_, Some(literal("true"))) => Some((qual, qual.end, expr.end))
+      case qual`.exists` ScMethodCall(f: ScReferenceExpression, Seq(literal("true"))) if isConstFunction(f) =>
         Some((qual, qual.end, expr.end))
       case `!`(CheckIsEmpty(qual, _, _)) => Some(qual, expr.start, expr.end)
       case qual `!=` scalaNone() if isOption(qual) => Some(qual, qual.end, expr.end)

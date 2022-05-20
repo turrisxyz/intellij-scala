@@ -33,37 +33,6 @@ import scala.jdk.CollectionConverters._
  * 2014-05-20
  */
 object ExtractSuperUtil {
-  def afterClassChoosing(element: PsiElement,
-                         project: Project,
-                         editor: Editor,
-                         file: PsiFile,
-                         isSuitableClass: PsiClass => Boolean)
-                        (action: => Unit): Unit = {
-    try {
-      val classes = ScalaPsiUtil.getParents(element, file).collect {
-        case t: ScTemplateDefinition if isSuitableClass(t) => t
-      }.toArray[PsiClass]
-      classes.size match {
-        case 0 =>
-        case 1 => action
-        case _ =>
-          val selection = classes(0)
-          val processor = new PsiElementProcessor[PsiClass] {
-            override def execute(aClass: PsiClass): Boolean = {
-              action
-              false
-            }
-          }
-          NavigationUtil.getPsiElementPopup(classes, new PsiClassListCellRenderer() {
-            override def getElementText(element: PsiClass): String = super.getElementText(element).replace("$", "")
-          }, ScalaBundle.message("choose.class"), processor, selection).showInBestPositionFor(editor)
-      }
-    }
-    catch {
-      case _: IntroduceException => return
-    }
-  }
-
   def classPresentableName(clazz: ScTemplateDefinition): String = {
     clazz match {
       case td: ScTypeDefinition => td.qualifiedName
