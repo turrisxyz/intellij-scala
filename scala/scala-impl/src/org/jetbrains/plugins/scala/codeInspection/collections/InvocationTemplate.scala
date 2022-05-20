@@ -46,7 +46,7 @@ class Qualified(nameCondition: String => Boolean) extends InvocationTemplate(nam
         if (ref.isDefined && refCondition(ref.get)) Some(qual, args)
         else None
       case MethodRepr(_, Some(MethodRepr(_, Some(qual), Some(ref), firstArgs)), None, secondArgs) if nameCondition(ref.refName) && refCondition(ref) =>
-        Some(qual, (firstArgs ++ secondArgs))
+        Some(qual, firstArgs ++ secondArgs)
       case _ => None
     }
   }

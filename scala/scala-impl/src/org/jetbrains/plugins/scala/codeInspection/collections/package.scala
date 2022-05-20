@@ -31,9 +31,9 @@ package object collections {
   def likeCollectionClasses: ArraySeq[String] = ArraySeq.unsafeWrapArray(ScalaApplicationSettings.getInstance().getLikeCollectionClasses)
   def likeOptionClasses: ArraySeq[String] = ArraySeq.unsafeWrapArray(ScalaApplicationSettings.getInstance().getLikeOptionClasses)
 
-  val monadicMethods = Set("map", "flatMap", "filter", "withFilter")
-  val foldMethodNames = Set("foldLeft", "/:", "foldRight", ":\\", "fold")
-  val reduceMethodNames = Set("reduce", "reduceLeft", "reduceRight")
+  private val monadicMethods: Set[String] = Set("map", "flatMap", "filter", "withFilter")
+  private val foldMethodNames: Set[String] = Set("foldLeft", "/:", "foldRight", ":\\", "fold")
+  private val reduceMethodNames: Set[String] = Set("reduce", "reduceLeft", "reduceRight")
 
   def invocation(methodName: String) = new Qualified(methodName == _)
   def invocation(methodNames: Set[String]) = new Qualified(methodNames.contains)
@@ -58,7 +58,6 @@ package object collections {
   private[collections] val `.collect` = invocation("collect").from(likeCollectionClasses)
 
   private[collections] val `.isDefined` = invocation(Set("isDefined", "nonEmpty")).from(likeOptionClasses)
-  private[collections] val `.isEmptyOnOption` = invocation("isEmpty").from(likeOptionClasses)
   private[collections] val `.isEmpty` = invocation("isEmpty").from(likeCollectionClasses)
   private[collections] val `.nonEmpty` = invocation("nonEmpty").from(likeCollectionClasses)
 
@@ -142,7 +141,7 @@ package object collections {
   object IfStmt {
     def unapply(expr: ScExpression): Option[(ScExpression, ScExpression, ScExpression)] = {
       expr match {
-        case ScIf(Some(c), Some(stripped(tb)), Some(stripped(eb))) => Some(c, tb, eb)
+        case ScIf(Some(c), Some(StrippedExpression(tb)), Some(StrippedExpression(eb))) => Some(c, tb, eb)
         case _ => None
       }
     }
@@ -340,7 +339,7 @@ package object collections {
     }
   }
 
-  object stripped {
+  object StrippedExpression {
     def unapply(expr: ScExpression): Option[ScExpression] = Some(stripped(expr))
   }
 
@@ -419,9 +418,7 @@ package object collections {
     case _ => false
   }
 
-  def withoutConversions(expr: ScExpression): Typeable = new Typeable {
-    override def `type`(): TypeResult = expr.getTypeWithoutImplicits()
-  }
+  def withoutConversions(expr: ScExpression): Typeable = () => expr.getTypeWithoutImplicits()
 
   private val sideEffectsCollectionMethods = Set("append", "appendAll", "clear", "insert", "insertAll",
     "prepend", "prependAll", "reduceToSize", "remove", "retain",
@@ -460,9 +457,9 @@ package object collections {
         }
       }
 
-      val predicate: (PsiElement) => Boolean = {
+      val predicate: PsiElement => Boolean = {
         case `expr` => true
-        case (ScFunctionExpr(_, _) | (_: ScCaseClauses)) childOf `expr` => true
+        case (ScFunctionExpr(_, _) | _: ScCaseClauses) childOf `expr` => true
         case (e: ScExpression) childOf `expr` if ScUnderScoreSectionUtil.underscores(e).nonEmpty => true
         case _: ScFunctionDefinition => false
         case elem: PsiElement => !ScalaEvaluatorBuilderUtil.isGenerateClass(elem)
@@ -477,7 +474,7 @@ package object collections {
           assign
         case infix @ ScInfixExpr(definedOutside(ScalaPsiUtil.inNameContext(_: ScVariable)), _, _) if infix.isAssignmentOperator =>
           infix
-        case MethodRepr(itself, Some(definedOutside(ScalaPsiUtil.inNameContext((_ : ScVariable | _: ScValue)))), Some(ref), _)
+        case MethodRepr(itself, Some(definedOutside(ScalaPsiUtil.inNameContext(_ : ScVariable | _: ScValue))), Some(ref), _)
           if isSideEffectCollectionMethod(ref) || isSetter(ref) || hasUnitReturnType(ref) => itself
         case MethodRepr(itself, None, Some(ref @ definedOutside(_)), _) if hasUnitReturnType(ref) => itself
       }.toSeq

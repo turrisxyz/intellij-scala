@@ -20,7 +20,7 @@ object `.contains _` {
     stripped(expr) match {
       case ScFunctionExpr(Seq(x), Some(result)) =>
         stripped(result) match {
-          case qual`.contains`(stripped(ResolvesTo(`x`))) if isIndependentOf(qual, x) => Some(qual)
+          case qual`.contains` StrippedExpression(ResolvesTo(`x`)) if isIndependentOf(qual, x) => Some(qual)
           case _ => None
         }
       case qual`.contains` underscore() => Some(qual)
@@ -41,7 +41,7 @@ object `!.contains _` {
     stripped(expr) match {
       case ScFunctionExpr(Seq(x), Some(result)) =>
         stripped(result) match {
-          case !(qual`.contains`(stripped(ResolvesTo(`x`)))) if isIndependentOf(qual, x) => Some(qual)
+          case !(qual`.contains` StrippedExpression(ResolvesTo(`x`))) if isIndependentOf(qual, x) => Some(qual)
           case _ => None
         }
       case _ => None

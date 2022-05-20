@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.scala.lang.dfa.invocationInfo
 
 import com.intellij.psi.{PsiElement, PsiMember, PsiNamedElement}
-import org.jetbrains.plugins.scala.extensions.{ObjectExt, PsiMemberExt, PsiNamedElementExt}
+import org.jetbrains.plugins.scala.extensions.{PsiMemberExt, PsiNamedElementExt}
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
 import org.jetbrains.plugins.scala.lang.psi.impl.toplevel.synthetic.ScSyntheticFunction
 import org.jetbrains.plugins.scala.lang.psi.types.api.Any
@@ -18,8 +18,6 @@ case class InvokedElement(psiElement: PsiElement) {
     }
     case _ => s"Invoked element of unknown type: $psiElement"
   }
-
-  def isSynthetic: Boolean = psiElement.is[ScSyntheticFunction]
 
   def simpleName: Option[String] = psiElement match {
     case namedElement: PsiNamedElement => Some(namedElement.name)

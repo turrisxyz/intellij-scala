@@ -3,7 +3,6 @@ package lang
 package psi
 package api
 
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.scala.extensions._
 import org.jetbrains.plugins.scala.lang.macros.evaluator.{MacroContext, ScalaMacroEvaluator}
@@ -37,9 +36,8 @@ import scala.util.control.ControlThrowable
   */
 
 object InferUtil {
-  val notFoundParameterName = "NotFoundParameter239239239"
 
-  val tagsAndManifists = Set(
+  val tagsAndManifists: Set[String] = Set(
     "scala.reflect.ClassManifest",
     "scala.reflect.Manifest",
     "scala.reflect.OptManifest",
@@ -51,18 +49,6 @@ object InferUtil {
   val ValueOf         = "scala.ValueOf"
   val ConformsWitness = "scala.Predef.<:<"
   val EquivWitness    = "scala.Predef.=:="
-
-  private val LOG = Logger.getInstance("#org.jetbrains.plugins.scala.lang.psi.api.InferUtil$")
-
-  private def isDebugImplicitParameters = LOG.isDebugEnabled
-
-  def logInfo(searchLevel: Int, message: => String): Unit = {
-    val indent = Seq.fill(searchLevel)("  ").mkString
-    //    println(indent + message)
-    if (isDebugImplicitParameters) {
-      LOG.debug(indent + message)
-    }
-  }
 
   /**
     * This method can find implicit parameters for given MethodType

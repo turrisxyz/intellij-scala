@@ -15,9 +15,6 @@ import org.jetbrains.plugins.scala.lang.psi.api.toplevel.typedef.ScObject
 class ImportsUsagesTest extends ScalaResolveTestCase {
   override def folderPath: String = super.folderPath + "resolve/imports/simple/"
 
-  def printResults(imports: Object): Unit = {
-  }
-
   def testStaticJava(): Unit = {
     findReferenceAtCaret() match {
       case r: PsiReference =>
@@ -65,7 +62,6 @@ class ImportsUsagesTest extends ScalaResolveTestCase {
         assert(srr.getElement != null)
         val imports = srr.importsUsed
         assert(imports.size == 1)
-        printResults(imports)
       case _ => throw new Exception("Wrong reference!")
     }
   }
@@ -83,7 +79,6 @@ class ImportsUsagesTest extends ScalaResolveTestCase {
         val imports = srr.importsUsed
         assert(imports.size == 3)
 
-        printResults(imports)
       case _ => throw new Exception("Wrong reference!")
     }
   }
@@ -101,7 +96,6 @@ class ImportsUsagesTest extends ScalaResolveTestCase {
         val imports = srr.importsUsed
         assert(imports.size == 3)
 
-        printResults(imports)
       case _ => throw new Exception("Wrong reference!")
     }
   }
@@ -118,7 +112,6 @@ class ImportsUsagesTest extends ScalaResolveTestCase {
         val imports = srr.importsUsed
         assert(imports.size == 1)
 
-        printResults(imports)
       case _ => throw new Exception("Wrong reference!")
     }
   }
@@ -135,7 +128,6 @@ class ImportsUsagesTest extends ScalaResolveTestCase {
         val imports = srr.importsUsed
         assert(imports.size == 2)
 
-        printResults(imports)
       case _ => throw new Exception("Wrong reference!")
     }
   }
@@ -152,7 +144,6 @@ class ImportsUsagesTest extends ScalaResolveTestCase {
         val imports = srr.importsUsed
         assert(imports.size == 2)
 
-        printResults(imports)
       case _ => throw new Exception("Wrong reference!")
     }
   }

@@ -32,7 +32,7 @@ trait IntegrationTestConfigAssertions {
   protected def assertPackageConfigAndSettings(
     configAndSettings: RunnerAndConfigurationSettings,
     packageName: String = "",
-    generatedName: String = "" // TODO: use (wasn't used from the very beginning
+    @scala.annotation.unused generatedName: String = "" // TODO: use (wasn't used from the very beginning)
   ): Unit =
     AssertPackageConfigAndSettings(packageName)(configAndSettings)
 
