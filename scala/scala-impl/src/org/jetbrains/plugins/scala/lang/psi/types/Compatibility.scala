@@ -518,16 +518,6 @@ object Compatibility {
       p.index, Some(p), default)
   }
 
-  def toParameter(p: PsiParameter): Parameter = {
-    val tp = p.paramType(extractVarargComponent = false)
-    val name = if (p.isInstanceOf[ClsParameterImpl]) "" else p.name
-    Parameter(name, None, tp, tp, isDefault = false, isRepeated = p.isVarArgs, isByName = false, p.index,
-      p match {
-        case param: ScParameter => Some(param)
-        case _ => None
-      })
-  }
-
   def compatible(
     srr:                ScalaResolveResult,
     substitutor:        ScSubstitutor,

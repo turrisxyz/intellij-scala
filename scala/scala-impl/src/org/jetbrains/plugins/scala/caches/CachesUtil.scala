@@ -54,15 +54,6 @@ object CachesUtil {
     }
   }
 
-  def libraryAwareModTracker(element: PsiElement): ModificationTracker = {
-    val rootManager = ProjectRootManager.getInstance(element.getProject)
-    element.getContainingFile match {
-      case file: ScalaFile if file.isCompiled && rootManager.getFileIndex.isInLibrary(file.getVirtualFile) => rootManager
-      case _: ClsFileImpl => rootManager
-      case _ => BlockModificationTracker(element)
-    }
-  }
-
   case class ProbablyRecursionException[Data](elem: PsiElement,
                                               data: Data,
                                               key: Key[_],
