@@ -31,10 +31,10 @@ final class SbtExtraControls {
       new GridConstraints(row, column, rowSpan, colSpan, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW, null, null, null, 0, false)
 
     val scalaVersionPreferencePanel = {
-      val panel = new JPanel();
+      val panel = new JPanel()
       panel.setLayout(new BoxLayout(panel, BoxLayout.LINE_AXIS))
-      panel.add(new JBLabel(SbtBundle.message("sbt.settings.scalaVersionPreference")));
-      panel.add(Box.createRigidArea(new Dimension(10, 0)));
+      panel.add(new JBLabel(SbtBundle.message("sbt.settings.scalaVersionPreference")))
+      panel.add(Box.createRigidArea(new Dimension(10, 0)))
       panel.add(UI.PanelFactory.panel(scalaVersionPreferenceComboBox).withTooltip(SbtBundle.message("sbt.settings.scalaVersionPreference.tooltip")).createPanel())
       panel
     }
@@ -69,6 +69,5 @@ object SbtExtraControls {
     def isSelected: Boolean = box.isSelected
     def setSelected(value: Boolean): Unit = box.setSelected(value)
     def setEnabled(value: Boolean): Unit = box.setEnabled(value)
-    def setVisible(value: Boolean): Unit = box.setVisible(value)
   }
 }

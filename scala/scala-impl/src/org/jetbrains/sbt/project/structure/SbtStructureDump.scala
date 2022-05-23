@@ -25,6 +25,7 @@ import java.nio.charset.Charset
 import java.util.UUID
 import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicBoolean
+import scala.collection.mutable
 import scala.concurrent.Future
 import scala.concurrent.duration.{DurationInt, FiniteDuration}
 import scala.jdk.CollectionConverters._
@@ -39,7 +40,7 @@ class SbtStructureDump {
   private val MaxImportDurationInUnitTests: FiniteDuration = 10.minutes
 
   // in failed tests we would like to see sbt process output
-  private val processOutputBuilder = new StringBuilder
+  private val processOutputBuilder = new mutable.StringBuilder
   def processOutput: String = processOutputBuilder.mkString
 
   def cancel(): Unit = cancellationFlag.set(true)
@@ -397,8 +398,4 @@ object SbtStructureDump {
 
   private val WARN_PREFIX = "[warn]"
   private val ERROR_PREFIX = "[error]"
-
-  sealed trait ImportType
-  case object ShellImport extends ImportType
-  case object ProcessImport extends ImportType
 }

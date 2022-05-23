@@ -27,10 +27,6 @@ object Sbt {
 
   @NonNls val ModulesDirectory = ".idea/modules"
 
-  val ProjectDescription: String = SbtBundle.message("sbt.project.description")
-
-  val ProjectLongDescription: String = SbtBundle.message("sbt.project.long.description")
-
   @NonNls val BuildModuleSuffix = "-build"
 
   val BuildModuleName: String = SbtBundle.message("sbt.build.module.name")
@@ -43,10 +39,10 @@ object Sbt {
 
   @NonNls val UnmanagedSourcesAndDocsName = "unmanaged-sources-and-docs"
 
-  @NonNls val DefinitionHolderClasses = Seq("sbt.Plugin", "sbt.Build")
+  @NonNls val DefinitionHolderClasses: Seq[String] = Seq("sbt.Plugin", "sbt.Build")
 
   // this should be in sync with sbt.BuildUtil.baseImports
-  @NonNls val DefaultImplicitImports = Seq("sbt._", "Process._", "Keys._", "dsl._")
+  @NonNls val DefaultImplicitImports: Seq[String] = Seq("sbt._", "Process._", "Keys._", "dsl._")
 
   val LatestVersion: Version = Version(BuildInfo.sbtLatestVersion)
   val Latest_1_0: Version = Version(BuildInfo.sbtLatest_1_0)
@@ -66,7 +62,6 @@ object Sbt {
    * to Icon, it will lead to corrupted ForkJoinPool in non-ignored tests.
    *
    * @see [[com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory]]
-   * @see [[com.intellij.concurrency.PoisonFactory]]
    */
   def Icon: Icon = Icons.SBT
   def FolderIcon: Icon = Icons.SBT_FOLDER

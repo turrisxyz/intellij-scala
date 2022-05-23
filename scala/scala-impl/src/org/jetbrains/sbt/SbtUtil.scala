@@ -70,8 +70,7 @@ object SbtUtil {
   private def getFileProperty(name: String): Option[File] = Option(System.getProperty(name)) flatMap { path =>
     if (path.isEmpty) None else Some(new File(path))
   }
-  private def fileProperty(name: String): File = new File(System.getProperty(name))
-  private[sbt] def defaultGlobalBase = fileProperty("user.home") / Sbt.Extension
+  private[sbt] def defaultGlobalBase = new File(System.getProperty("user.home")) / Sbt.Extension
   private def defaultVersionedGlobalBase(sbtVersion: Version): File = {
     defaultGlobalBase / binaryVersion(sbtVersion).presentation
   }
@@ -91,8 +90,6 @@ object SbtUtil {
       .orElse(sbtVersionInBootPropertiesOf(sbtLauncher))
       .orElse(readManifestAttributeFrom(sbtLauncher, "Implementation-Version"))
       .getOrElse(BuildInfo.sbtLatestVersion)
-
-  def numbersOf(version: String): Seq[String] = version.split("\\D").toSeq
 
   private def readManifestAttributeFrom(file: File, name: String): Option[String] = {
     val jar = new JarFile(file)
@@ -226,8 +223,6 @@ object SbtUtil {
   }
 
   def getLauncherDir: File = getDirInPlugin("launcher")
-
-  def getLibDir: File = getDirInPlugin("lib")
 
   def getRepoDir: File = getDirInPlugin("repo")
 

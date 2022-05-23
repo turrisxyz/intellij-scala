@@ -28,12 +28,11 @@ object SbtDependencyUtils {
   val ANY: String = "Any"
 
   val SBT_PROJECT_TYPE = "_root_.sbt.Project"
-  val SBT_SEQ_TYPE = "_root_.scala.collection.Seq"
   val SBT_SETTING_TYPE = "_root_.sbt.Def.Setting"
   val SBT_MODULE_ID_TYPE = "sbt.ModuleID"
   val SBT_LIB_CONFIGURATION = "_root_.sbt.librarymanagement.Configuration"
 
-  val SCALA_DEPENDENCIES_WITH_MINOR_SCALA_VERSION_LIST = List(
+  val SCALA_DEPENDENCIES_WITH_MINOR_SCALA_VERSION_LIST: Seq[String] = List(
     "ch.epfl.scala:scalafix-cli",
     "ch.epfl.scala:scalafix-reflect",
     "ch.epfl.scala:scalafix-testkit",
@@ -127,7 +126,7 @@ object SbtDependencyUtils {
     v.split("\\.").map(part => {
       val newPart = pattern.findAllIn(part).toList
       if (newPart.isEmpty) 0
-      else newPart(0)
+      else newPart.head
     }).mkString(".")
   }
 
@@ -346,7 +345,7 @@ object SbtDependencyUtils {
     def callbackDep(psiElement: PsiElement): Boolean = {
       psiElement match {
         case infix: ScInfixExpr if infix.operation.refName.contains("%") =>
-          infix.getText.split('%').map(_.trim).filter(_.nonEmpty).length - 1 match {
+          infix.getText.split('%').map(_.trim).count(_.nonEmpty) - 1 match {
             case 1 if infix.right.isInstanceOf[ScReferenceExpression] &&
               infix.right.`type`().getOrAny.canonicalText.equals(SBT_LIB_CONFIGURATION) => inReadAction {
               val configuration = cleanUpDependencyPart(infix.right.getText).toLowerCase.capitalize
@@ -617,9 +616,9 @@ object SbtDependencyUtils {
   def generateArtifactTextVerbose(groupId: String, artifactId: String, version: String, configuration: String): String = {
     var artifactText = ""
     if (artifactId.matches("^.+_\\d+.*$"))
-      artifactText += s""""${groupId}" %% "${artifactId.replaceAll("_\\d+.*$", "")}" % "${version}""""
+      artifactText += s""""$groupId" %% "${artifactId.replaceAll("_\\d+.*$", "")}" % "$version""""
     else
-      artifactText += s""""${groupId}" % "${artifactId}" % "${version}""""
+      artifactText += s""""$groupId" % "$artifactId" % "$version""""
 
     if (configuration != SbtDependencyCommon.defaultLibScope) {
       artifactText += s""" % $configuration"""

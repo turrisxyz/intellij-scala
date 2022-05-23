@@ -5,16 +5,14 @@ package service
 
 import com.intellij.compiler.CompilerConfiguration
 import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration
-import com.intellij.notification.NotificationGroupManager
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl
+import com.intellij.openapi.roots.LanguageLevelModuleExtension
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.util.CommonProcessors.{CollectProcessor, UniqueProcessor}
-import org.jetbrains.plugins.scala.NlsString
 import org.jetbrains.plugins.scala.project._
 import org.jetbrains.plugins.scala.project.external._
 import org.jetbrains.plugins.scala.settings.ScalaProjectSettings
@@ -137,7 +135,7 @@ final class SbtModuleExtDataService extends ScalaAbstractProjectDataService[SbtM
     val languageLevelFromJavac = JavacOptionsUtils.javaLanguageLevel(javacOptions)
     val languageLevel = languageLevelFromJavac.orElse(moduleSdk.flatMap(SdkUtils.defaultJavaLanguageLevelIn))
     languageLevel.foreach { level =>
-      val extension = model.getModuleExtension(classOf[LanguageLevelModuleExtensionImpl])
+      val extension = model.getModuleExtension(classOf[LanguageLevelModuleExtension])
       extension.setLanguageLevel(level)
     }
   }
@@ -170,21 +168,5 @@ final class SbtModuleExtDataService extends ScalaAbstractProjectDataService[SbtM
         compilerSettings.setAdditionalOptions(module, javacOptions.asJava)
       }
     }
-  }
-
-  protected def showScalaLibraryNotFoundWarning(
-    version: String,
-    module: String
-  )(implicit project: Project): Unit = {
-    val balloonGroupId = SbtBundle.message("sbt.notificationGroupName")
-    val balloonGroup = NotificationGroupManager.getInstance.getNotificationGroup(balloonGroupId)
-
-    showScalaLibraryNotFoundWarning(
-      NlsString(SbtBundle.message("sbt.notificationGroupTitle")),
-      version,
-      module,
-      balloonGroup, // TODO: should balloon group be taken from localised messages?
-      SbtProjectSystem.Id
-    )
   }
 }

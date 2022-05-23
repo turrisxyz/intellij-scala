@@ -129,9 +129,9 @@ object ScImportOrExportImpl {
             if p.kinds.contains(ResolveTargets.CLASS) &&
               ref.getKinds(incomplete = false).contains(ResolveTargets.CLASS) &&
               ref.getKinds(incomplete = false).contains(ResolveTargets.METHOD) =>
-            ref.resolveTypesOnly(false)
+            ref.resolveTypesOnly
           case ref: ScStableCodeReference if p.kinds.contains(ResolveTargets.METHOD) =>
-            ref.resolveMethodsOnly(false)
+            ref.resolveMethodsOnly
           case _ => ref.multiResolveScala(false)
         }
       case _ => ref.multiResolveScala(false)

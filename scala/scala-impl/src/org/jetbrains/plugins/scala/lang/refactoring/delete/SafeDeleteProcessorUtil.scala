@@ -4,7 +4,7 @@ package refactoring
 package delete
 
 import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.util.{Condition, TextRange}
+import com.intellij.openapi.util.Condition
 import com.intellij.psi._
 import com.intellij.psi.impl.source.javadoc.PsiDocMethodOrFieldRef
 import com.intellij.psi.javadoc.PsiDocTag
@@ -32,7 +32,7 @@ import scala.collection.mutable
 import scala.jdk.CollectionConverters._
 
 /**
- * This is a port of the static, private mtehods in JavaSafeDeleteProcessor.
+ * This is a port of the static private methods in JavaSafeDeleteProcessor.
  *
  * Much still needs to be made Scala aware.
  *
@@ -48,7 +48,6 @@ object SafeDeleteProcessorUtil {
   private def referenceSearch(element: PsiElement) = ReferencesSearch.search(element, element.getUseScope)
   
   def findClassUsages(psiClass: PsiClass, allElementsToDelete: Array[PsiElement], usages: util.List[UsageInfo]): Unit = {
-    val justPrivates: Boolean = containsOnlyPrivates(psiClass)
     referenceSearch(psiClass).forEach(new Processor[PsiReference] {
       override def process(reference: PsiReference): Boolean = {
         val element: PsiElement = reference.getElement
@@ -57,13 +56,6 @@ object SafeDeleteProcessorUtil {
           if (parent.isInstanceOf[PsiReferenceList]) {
             val pparent: PsiElement = parent.getParent
             pparent match {
-              case inheritor: PsiClass =>
-                if (justPrivates) {
-                  if (parent.equals(inheritor.getExtendsList) || parent.equals(inheritor.getImplementsList)) {
-                    usages.add(new SafeDeleteExtendsClassUsageInfo(element.asInstanceOf[PsiJavaCodeReferenceElement], psiClass, inheritor))
-                    return true
-                  }
-                }
               case _ =>
             }
           }
@@ -74,7 +66,7 @@ object SafeDeleteProcessorUtil {
               val results = ref.multiResolveScala(false)
               def isSyntheticObject(e: PsiElement) = e.asOptionOf[ScObject].exists(_.isSyntheticObject)
               val nonSyntheticTargets = results.map(_.getElement).filterNot(isSyntheticObject)
-              nonSyntheticTargets.toSet subsetOf allElementsToDelete.toSet
+              nonSyntheticTargets.toSet[PsiElement] subsetOf allElementsToDelete.toSet
             case _ => true
           }
 
@@ -89,10 +81,6 @@ object SafeDeleteProcessorUtil {
         true
       }
     })
-  }
-
-  def containsOnlyPrivates(aClass: PsiClass): Boolean = {
-    false // TODO
   }
 
   def findTypeParameterExternalUsages(typeParameter: PsiTypeParameter, usages: util.Collection[UsageInfo]): Unit = {
@@ -152,16 +140,6 @@ object SafeDeleteProcessorUtil {
         isInside(usage, allElementsToDelete) || isInside(usage, validOverriding)
       }
     }
-  }
-
-  def removeDeletedMethods(methods: Array[PsiMethod], allElementsToDelete: Array[PsiElement]): Array[PsiMethod] = {
-    val list: util.ArrayList[PsiMethod] = new util.ArrayList[PsiMethod]
-    for (method <- methods) {
-      if (!allElementsToDelete.contains(method)) {
-        list.add(method)
-      }
-    }
-    list.toArray(new Array[PsiMethod](list.size))
   }
 
   @Nullable def findConstructorUsages(constructor: PsiMethod, originalReferences: util.Collection[PsiReference], usages: util.List[UsageInfo], allElementsToDelete: Array[PsiElement]): Condition[PsiElement] = {
@@ -315,27 +293,6 @@ object SafeDeleteProcessorUtil {
       }
     }
     true
-  }
-
-  def findFieldUsages(psiField: PsiField, usages: util.List[UsageInfo], allElementsToDelete: Array[PsiElement]): Condition[PsiElement] = {
-    val isInsideDeleted: Condition[PsiElement] = getUsageInsideDeletedFilter(allElementsToDelete)
-    referenceSearch(psiField).forEach(new Processor[PsiReference] {
-      override def process(reference: PsiReference): Boolean = {
-        if (!isInsideDeleted.value(reference.getElement)) {
-          val element: PsiElement = reference.getElement
-          val parent: PsiElement = element.getParent
-          parent match {
-            case assignExpr: PsiAssignmentExpression if element == assignExpr.getLExpression =>
-              usages.add(new SafeDeleteFieldWriteReference(assignExpr, psiField))
-            case _ =>
-              val range: TextRange = reference.getRangeInElement
-              usages.add(new SafeDeleteReferenceJavaDeleteUsageInfo(reference.getElement, psiField, range.getStartOffset, range.getEndOffset, false, element.parentOfType(classOf[PsiImportStaticStatement]).isDefined))
-          }
-        }
-        true
-      }
-    })
-    isInsideDeleted
   }
 
   private def findMethodOrConstructorInvocation(element: PsiElement): Iterator[ImplicitArgumentsOwner] = {

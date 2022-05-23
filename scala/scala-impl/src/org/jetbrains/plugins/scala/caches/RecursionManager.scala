@@ -39,11 +39,6 @@ object RecursionManager {
     }
   }
 
-  //invalidates all current StackStamps
-  def prohibitCaching(): Unit = {
-    ourStack.value.prohibitCaching()
-  }
-
   class RecursionGuard[Data >: Null <: AnyRef, LocalCacheValue] private (id: String) {
 
     //see also org.jetbrains.plugins.scala.macroAnnotations.CachedMacroUtil.doPreventingRecursion
@@ -167,12 +162,6 @@ object RecursionManager {
       stamp > minStackDepthInRecursion
 
     private[RecursionManager] def isDirty: Boolean = _isDirty
-
-    private[RecursionManager] def prohibitCaching(): Unit = {
-      if (depth > 0) {
-        _isDirty = true
-      }
-    }
 
     private[RecursionManager] def beforeComputation(realKey: MyKey[_]): Int = {
       enters += 1

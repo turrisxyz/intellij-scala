@@ -14,7 +14,7 @@ object ResolvableStableCodeReference {
   implicit class Ext(private val stableRef: ScStableCodeReference) extends AnyVal {
 
     @CachedWithRecursionGuard(stableRef, ScalaResolveResult.EMPTY_ARRAY, BlockModificationTracker(stableRef))
-    def resolveTypesOnly(incomplete: Boolean): Array[ScalaResolveResult] = {
+    def resolveTypesOnly: Array[ScalaResolveResult] = {
       val importResolverNoMethods = new StableCodeReferenceResolver(stableRef, false, false, false) {
         override protected def getKindsFor(ref: ScStableCodeReference): Set[ResolveTargets.Value] = {
           ref.getKinds(incomplete = false) diff StdKinds.methodRef
@@ -24,13 +24,12 @@ object ResolvableStableCodeReference {
     }
 
     @CachedWithRecursionGuard(stableRef, ScalaResolveResult.EMPTY_ARRAY, BlockModificationTracker(stableRef))
-    def resolveMethodsOnly(incomplete: Boolean): Array[ScalaResolveResult] = {
+    def resolveMethodsOnly: Array[ScalaResolveResult] = {
       val importResolverNoTypes = new StableCodeReferenceResolver(stableRef, false, false, false) {
         override protected def getKindsFor(ref: ScStableCodeReference): Set[ResolveTargets.Value] = {
           ref.getKinds(incomplete = false) diff StdKinds.stableClass
         }
       }
-
       importResolverNoTypes.resolve()
     }
 

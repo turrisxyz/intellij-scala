@@ -86,11 +86,13 @@ private object MultipleScalaVersionsRunner {
   }
 
   private case class ScalaVersionTestSuite(name: String) extends MyBaseTestSuite(name) {
+    def this() = this(null: String)
     def this(version: ScalaVersion) = this(sanitize(s"(scala ${version.minor})"))
     def this(version: ScalaVersion, jdkVersion: JdkVersion) = this(sanitize(s"(scala ${version.minor} $jdkVersion)"))
   }
 
   private case class JdkVersionTestSuite(name: String) extends MyBaseTestSuite(name) {
+    def this() = this(null: String)
     def this(version: JdkVersion) = this(sanitize(s"(jdk ${version.toString})"))
   }
 

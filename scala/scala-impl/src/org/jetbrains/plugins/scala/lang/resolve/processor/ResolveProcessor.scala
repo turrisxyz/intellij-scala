@@ -53,14 +53,12 @@ class ResolveProcessor(override val kinds: Set[ResolveTargets.Value],
     case _                                        => false
   }
 
-  def emptyResultSet: Boolean = candidatesSet.isEmpty || levelSet.isEmpty
-
   override protected def nameUniquenessStrategy: NameUniquenessStrategy = ResolveStrategy
 
   override protected val holder: SimpleTopPrecedenceHolder = new SimpleTopPrecedenceHolder
 
   /**
-    * This method useful for resetting precednce if we dropped
+    * This method is useful for resetting precedence if we dropped
     * all found candidates to seek implicit conversion candidates.
     */
   def resetPrecedence(): Unit = holder.reset()

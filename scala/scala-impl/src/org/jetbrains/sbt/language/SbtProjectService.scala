@@ -56,29 +56,6 @@ final class SbtProjectService(project: Project) extends Disposable {
     }
   }
 
-  val unindexedNotifier: Consumer[util.List[MavenIndex]] = new Consumer[util.List[MavenIndex]] {
-    override def consume(mavenIndexes: util.List[MavenIndex]): Unit = {
-
-      if (project.isDisposed) return
-      val sbtRepos = (new SbtMavenRepositoryProvider)
-        .getRemoteRepositories(project)
-        .asScala
-        .map(_.getUrl)
-        .toSet
-
-      val unindexedRepos = mavenIndexes
-        .asScala
-        .filter(idx => idx.getUpdateTimestamp == -1 && sbtRepos.contains(idx.getRepositoryPathOrUrl))
-
-      if (unindexedRepos.isEmpty) return
-      val title = SbtBundle.message("sbt.unindexed.maven.repositories.found", unindexedRepos.length.toString)
-      val message =
-        SbtBundle.message("sbt.unindexed.maven.repositories.found.message").stripMargin
-      val notificationData = createIndexerNotification(title, message)
-      ExternalSystemNotificationManager.getInstance(project).showNotification(SbtProjectSystem.Id, notificationData)
-    }
-  }
-
   private def setupMavenIndexes(): Unit =
     if (!ApplicationManager.getApplication.isUnitTestMode && isIdeaPluginEnabled("org.jetbrains.idea.maven"))
       MavenIndicesManager.getInstance(project).scheduleUpdateIndicesList(null)
@@ -92,7 +69,7 @@ final class SbtProjectService(project: Project) extends Disposable {
     notificationData.setBalloonNotification(true)
     notificationData.setBalloonGroup(SBT_MAVEN_NOTIFICATION_GROUP)
     notificationData.setListener(
-      "#open", (notification: Notification, e: HyperlinkEvent) => {
+      "#open", (_: Notification, _: HyperlinkEvent) => {
         val ui = ProjectStructureConfigurable.getInstance(project)
         val editor = new SingleConfigurableEditor(project, ui)
         val module = ui.getModulesConfig.getModules.find(ModuleType.get(_).isInstanceOf[SbtModuleType])
@@ -101,7 +78,7 @@ final class SbtProjectService(project: Project) extends Disposable {
         TransactionGuard.getInstance().submitTransactionAndWait(() => editor.show()): @nowarn("cat=deprecation")
       })
     notificationData.setListener(
-      "#disable", (notification: Notification, e: HyperlinkEvent) => {
+      "#disable", (notification: Notification, _: HyperlinkEvent) => {
         val result: Int = Messages.showYesNoDialog(project,
           SbtBundle.message("sbt.notification.will.be.disabled.for.all.projects", SBT_MAVEN_NOTIFICATION_GROUP_ID),
           SbtBundle.message("sbt.unindexed.maven.repositories.sbt.detection"),
@@ -115,9 +92,4 @@ final class SbtProjectService(project: Project) extends Disposable {
       })
     notificationData
   }
-}
-
-object SbtProjectService {
-  def getInstance(project: Project): SbtProjectService =
-    project.getService(classOf[SbtProjectService])
 }

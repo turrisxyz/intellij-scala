@@ -120,7 +120,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
     // more side-effecty reporting
     conversionResult.transform (
       _ => Success(new SuccessResultImpl(0, System.currentTimeMillis(), true)), /* TODO starttime*/
-      x => Success(
+      _ => Success(
         new FailureResultImpl(0, System.currentTimeMillis(),
           List.empty[com.intellij.openapi.externalSystem.model.task.event.Failure].asJava // TODO error list
         )
@@ -747,7 +747,7 @@ class SbtProjectResolver extends ExternalSystemProjectResolver[SbtExecutionSetti
 
 object SbtProjectResolver {
 
-  val IJ_SDK_CLASSIFIERS = Set("IJ-SDK", "IJ-PLUGIN")
+  val IJ_SDK_CLASSIFIERS: Set[String] = Set("IJ-SDK", "IJ-PLUGIN")
 
   case class ImportCancelledException(cause: Throwable) extends Exception(cause)
 
