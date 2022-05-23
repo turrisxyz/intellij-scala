@@ -136,7 +136,7 @@ trait Namer {
     @tailrec
     def loop(mtp: m.Type): m.Name = {
       mtp match {
-        case _@m.Type.Name(value) => m.Name.Indeterminate(value)
+        case m.Type.Name(value) => m.Name.Indeterminate(value)
         case _: m.Type.Select => loop(mtp.stripped)
         case _: m.Type.Project => loop(mtp.stripped)
         case other => throw new AbortException(other, ScalaMetaBundle.message("super.selector.cannot.be.non.name.type"))

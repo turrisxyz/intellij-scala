@@ -5,7 +5,7 @@ import com.intellij.execution.ExecutionException
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager
-import com.intellij.openapi.fileEditor.{FileDocumentManager, FileEditorManager}
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.module._
 import com.intellij.openapi.project.{DumbService, Project, ProjectUtil}
 import com.intellij.openapi.roots._
@@ -13,7 +13,7 @@ import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.{Library, LibraryTablesRegistrar}
 import com.intellij.openapi.util.{Key, UserDataHolder, UserDataHolderEx}
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.{LanguageSubstitutors, PsiElement, PsiFile}
+import com.intellij.psi.{PsiElement, PsiFile}
 import com.intellij.util.PathsList
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import org.jetbrains.annotations.TestOnly
@@ -137,9 +137,6 @@ package object project {
     def isScalaNative: Boolean =
       scalaModuleSettings.exists(_.isScalaNative)
 
-    def hasNoIndentFlag: Boolean = scalaModuleSettings.exists(_.hasNoIndentFlag)
-    def hasOldSyntaxFlag: Boolean = scalaModuleSettings.exists(_.hasOldSyntaxFlag)
-
     def isJvmModule: Boolean = !isScalaJs && !isScalaNative && !isSharedSourceModule
 
     def findJVMModule: Option[Module] = {
@@ -236,9 +233,6 @@ package object project {
     def scalaMinorVersion: Option[ScalaVersion] =
       scalaModuleSettings.flatMap(_.scalaMinorVersion)
 
-    def scalaMinorVersionOrDefault: ScalaVersion =
-      scalaMinorVersion.getOrElse(ScalaVersion.default)
-
     def isCompilerStrictMode: Boolean =
       scalaModuleSettings.exists(_.isCompilerStrictMode)
 
@@ -323,9 +317,6 @@ package object project {
 
     def sourceModules: Seq[Module] = manager.getModules.filter(_.isSourceModule).toSeq
 
-    def modifiableModel: ModifiableModuleModel =
-      manager.getModifiableModel
-
     def hasScala: Boolean = modulesWithScala.nonEmpty
 
     // TODO Generalize: hasScala(Version => Boolean), hasScala(_ >= Scala3)
@@ -355,10 +346,6 @@ package object project {
     // TODO: SCL-18097: it should be per-module, like for all other compiler flags (e.g. for isSAMEnabled)
     def isPartialUnificationEnabled: Boolean = modulesWithScala.exists(_.isPartialUnificationEnabled)
 
-    def selectedDocument: Option[Document] =
-      Option(FileEditorManager.getInstance(project).getSelectedTextEditor)
-        .map(_.getDocument)
-
     def isIntellijScalaPluginProject: Boolean = {
       val name = project.getName
       name == "scalaUltimate" || name == "scalaCommunity"
@@ -381,13 +368,6 @@ package object project {
   }
 
   implicit class VirtualFileExt(private val file: VirtualFile) extends AnyVal {
-
-    def isScala3(implicit project: Project): Boolean =
-      LanguageSubstitutors.getInstance.substituteLanguage(
-        ScalaLanguage.INSTANCE,
-        file,
-        project
-      ) != ScalaLanguage.INSTANCE
 
     def findDocument: Option[Document] =
       Option(FileDocumentManager.getInstance.getDocument(file))
@@ -512,8 +492,6 @@ package object project {
       val file = element.getContainingFile
       file != null && (file.getLanguage == Scala3Language.INSTANCE || file.isDefinedInModuleOrProject(_.literalTypesEnabled))
     }
-
-    def partialUnificationEnabled: Boolean = isDefinedInModuleOrProject(_.isPartialUnificationEnabled)
 
     def newCollectionsFramework: Boolean = module.exists(_.hasNewCollectionsFramework)
 

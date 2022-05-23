@@ -245,8 +245,6 @@ package object extensions {
     // https://github.com/scala/collection-strawman/issues/208
     def intersperse[B >: A](sep: B): Seq[B] = value.iterator.intersperse(sep).toSeq
 
-    def intersperse[B >: A](start: B, sep: B, end: B): Seq[B] = value.iterator.intersperse(start, sep, end).toSeq
-
     // https://pavelfatin.com/twitter-puddles-and-foldlr
     def foldlr[L, R](l: L, r: R)(f1: (L, A) => L)(f2: (L, A, R) => R): R =
       if (value.isEmpty) r
@@ -340,12 +338,6 @@ package object extensions {
     def nullSafe: NullSafe[A] = NullSafe(a)
   }
 
-  implicit class OptionToNullSafe[+A >: Null](private val a: Option[A]) extends AnyVal {
-    //to handle Some(null) case and avoid wrapping of intermediate function results
-    //in chained map/flatMap calls
-    def toNullSafe: NullSafe[A] = NullSafe(a.orNull)
-  }
-
   implicit class ObjectExt[T](private val v: T) extends AnyVal {
     def toOption: Option[T] = Option(v)
 
@@ -405,11 +397,6 @@ package object extensions {
       else v
   }
 
-  implicit class ReferenceExt[T](private val target: Reference[T]) extends AnyVal {
-
-    def getOpt: Option[T] = Option(target.get())
-  }
-
   implicit class OptionExt[T](private val option: Option[T]) extends AnyVal {
     def getOrThrow(exception: => Exception): T = option.getOrElse(throw exception)
 
@@ -427,8 +414,6 @@ package object extensions {
 
   implicit class BooleanExt(private val b: Boolean) extends AnyVal {
     def option[A](a: => A): Option[A] = if (b) Option(a) else None
-
-    def either[A, B](right: => B)(left: => A): Either[A, B] = if (b) Right(right) else Left(left)
 
     def seq[A](a: => A): Seq[A] = if (b) Seq(a) else Seq.empty
 
@@ -531,17 +516,12 @@ package object extensions {
 
     def count(pred: Char => Boolean): Int = iterator.count(pred)
 
-    def exists(pred: Char => Boolean): Boolean = iterator.exists(pred)
-
     def forall(pred: Char => Boolean): Boolean = iterator.forall(pred)
 
     def prefixLength(pred: Char => Boolean): Int = iterator.takeWhile(pred).size
 
     def startsWith(prefix: String): Boolean =
       prefix.length <= cs.length && cs.substring(0, prefix.length) == prefix
-
-    def endsWith(suffix: String): Boolean =
-      suffix.length <= cs.length && cs.substring(cs.length() - suffix.length) == suffix
 
     def substring(start: Int, end: Int = cs.length()): String =
       cs.subSequence(start, end).toString
@@ -572,7 +552,6 @@ package object extensions {
   }
 
   implicit class TextRangeExt(private val target: TextRange) extends AnyVal {
-    def expand(delta: Int): TextRange = TextRange.create(target.getStartOffset - delta, target.getEndOffset + delta)
     def shrink(delta: Int): TextRange = TextRange.create(target.getStartOffset + delta, target.getEndOffset - delta)
     def shiftStart(delta: Int): TextRange = TextRange.create(target.getStartOffset + delta, target.getEndOffset)
     def shiftEnd(delta: Int): TextRange = TextRange.create(target.getStartOffset, target.getEndOffset + delta)
@@ -661,9 +640,6 @@ package object extensions {
     def parentOfType(classes: Seq[Class[_ <: PsiElement]]): Option[PsiElement] =
       Option(getParentOfType(element, classes: _*))
 
-    def nonStrictParentOfType[Psi <: PsiElement: ClassTag]: Option[Psi] =
-      nonStrictParentOfType(implicitly[ClassTag[Psi]].runtimeClass.asInstanceOf[Class[Psi]])
-
     def nonStrictParentOfType[Psi <: PsiElement](clazz: Class[Psi]): Option[Psi] =
       Option(getNonStrictParentOfType(element, clazz))
 
@@ -725,8 +701,6 @@ package object extensions {
     def isWhitespace: Boolean = element.isInstanceOf[PsiWhiteSpace]
 
     def isComment: Boolean = element.isInstanceOf[PsiComment]
-
-    def isWhitespaceOrComment: Boolean = isWhitespace || isComment
 
     // TODO Scala 2.13: use Iterator.unfold to extract prevElements and nextElements methods
     def prevElementNotWhitespace: Option[PsiElement] = element.prevElement.flatMap(e => if (e.isWhitespace) e.prevElement else Some(e))
@@ -854,9 +828,6 @@ package object extensions {
         case next => next.toOption
       }
 
-    def firstLeaf: PsiElement =
-      PsiTreeUtil.getDeepestFirst(element)
-
     def lastLeaf: PsiElement =
       PsiTreeUtil.getDeepestLast(element)
 
@@ -865,9 +836,6 @@ package object extensions {
         case ws: PsiWhiteSpace => ws.getNextSiblingNotWhitespace
         case child => child
       }
-
-    def firstChildNotWhitespace: Option[PsiElement] =
-      Option(getFirstChildNotWhitespace)
 
     def getFirstChildNotWhitespaceComment: PsiElement =
       element.getFirstChild match {
@@ -1181,31 +1149,12 @@ package object extensions {
     def treeNextNodes: Iterator[ASTNode] = new ASTNodeTreeNextIterator(node)
     def withTreeNextNodes: Iterator[ASTNode] = Iterator(node) ++ new ASTNodeTreeNextIterator(node)
     def treePrevNodes: Iterator[ASTNode] = new ASTNodeTreePrevIterator(node)
-    def withTreePrevNodes: Iterator[ASTNode] = Iterator(node) ++ new ASTNodeTreePrevIterator(node)
 
     def hasElementType(elementType: IElementType): Boolean =
       node.nullSafe.exists(_.getElementType == elementType)
 
     def isWhitespaceOrComment: Boolean = {
       node != null && PsiImplUtil.isWhitespaceOrComment(node)
-    }
-
-    def nextNonWhitespaceNode: ASTNode = {
-      var next = node.getTreeNext
-
-      while (next != null && next.isWhitespaceOrComment)
-        next = next.getTreeNext
-
-      next
-    }
-
-    def prevNonWhitespaceNode: ASTNode = {
-      var prev = node.getTreePrev
-
-      while (prev != null && prev.isWhitespaceOrComment)
-        prev = prev.getTreePrev
-
-      prev
     }
   }
 
@@ -1403,13 +1352,6 @@ package object extensions {
   def withDisabledPostprocessFormatting[T](project: Project)(body: => T): T =
     PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(body)
 
-  // Make sure to handle possible exceptions
-  def invokeInFuture[T](body: => T): Future[T] = {
-    val promise = Promise[T]()
-    invokeLater(promise.complete(Try(body)))
-    promise.future
-  }
-
   def invokeLater[T](body: => T): Unit =
     ApplicationManager.getApplication.invokeLater(() => body)
 
@@ -1435,15 +1377,6 @@ package object extensions {
     TransactionGuard.getInstance().submitTransactionLater(disposable, () => body): @nowarn("cat=deprecation")
   }
 
-  def invokeAndWaitInTransaction(body: => Unit): Unit = {
-    TransactionGuard.getInstance().submitTransactionAndWait(() => body): @nowarn("cat=deprecation")
-  }
-
-  def registerDynamicPluginListener(listener: DynamicPluginListener, parentDisposable: Disposable): Unit = {
-    val connection = ApplicationManager.getApplication.getMessageBus.connect(parentDisposable)
-    connection.subscribe(DynamicPluginListener.TOPIC, listener)
-  }
-
   def invokeOnDispose(parentDisposable: Disposable)(body: => Unit): Unit =
     Disposer.register(parentDisposable, () => body)
 
@@ -1456,21 +1389,6 @@ package object extensions {
         case _ => throw e
       }
     }
-
-  /** Create a PartialFunction from a sequence of cases. Workaround for pattern matcher bug */
-  def pf[A, B](cases: PartialFunction[A, B]*): PartialFunction[A, B] = new PartialFunction[A, B] {
-    override def isDefinedAt(x: A): Boolean = cases.exists(_.isDefinedAt(x))
-
-    override def apply(v1: A): B = {
-      val it = cases.iterator
-      while (it.hasNext) {
-        val caze = it.next()
-        if (caze.isDefinedAt(v1))
-          return caze(v1)
-      }
-      throw new MatchError(v1.toString)
-    }
-  }
 
   implicit class PsiParameterExt(val param: PsiParameter) extends AnyVal {
     implicit def project: ProjectContext = param.getProject
@@ -1625,11 +1543,6 @@ package object extensions {
         logger.debug(message)
       }
 
-    def debugSafe(@NonNls message: => String, ex: Throwable): Unit =
-      if (logger.isDebugEnabled) {
-        logger.debug(message, ex)
-      }
-
     def traceSafe(@NonNls message: => String): Unit =
       if (logger.isTraceEnabled)
         logger.trace(message)
@@ -1662,8 +1575,6 @@ package object extensions {
       withParents.drop(1)
     def withParents: Iterator[Path] =
       Iterator.iterate(path)(_.getParent).takeWhile(_ != null)
-    def systemIndependentPathString: String =
-      path.toString.replace(java.io.File.separatorChar, '/')
   }
 
   object executionContext {

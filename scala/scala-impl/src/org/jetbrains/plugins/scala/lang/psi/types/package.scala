@@ -105,7 +105,7 @@ package object types {
     def isNull: Boolean = isStdType(Name.Null)
 
     def isPrimitive: Boolean = scType match {
-      case v: ValType => !isUnit
+      case _: ValType => !isUnit
       case _ => false
     }
 
@@ -257,7 +257,7 @@ package object types {
     def tryWrapIntoSeqType(implicit scope: ElementScope): ScType =
       wrapIntoSeqType.getOrElse(scType)
 
-    def hasRecursiveTypeParameters[T](typeParamIds: Set[Long]): Boolean = scType.subtypeExists {
+    def hasRecursiveTypeParameters(typeParamIds: Set[Long]): Boolean = scType.subtypeExists {
       case tpt: TypeParameterType =>
         typeParamIds.contains(tpt.typeParamId)
       case _ => false
@@ -269,7 +269,7 @@ package object types {
     }
 
     def parents: Seq[ScType] = scType match {
-      case ParameterizedType(des, args) => {
+      case ParameterizedType(des, args) =>
         val targetCls = des match {
           case ScDesignatorType(cls: PsiClass)    => cls
           case ScProjectionType(_, cls: PsiClass) => cls
@@ -277,7 +277,6 @@ package object types {
 
         val subst = ScSubstitutor.bind(targetCls.getTypeParameters, args)
         targetCls.superTypes.map(subst)
-      }
       case ScDesignatorType(cls: PsiClass)    => cls.superTypes
       case ScProjectionType(_, cls: PsiClass) => cls.superTypes
       case _                                  => Seq.empty

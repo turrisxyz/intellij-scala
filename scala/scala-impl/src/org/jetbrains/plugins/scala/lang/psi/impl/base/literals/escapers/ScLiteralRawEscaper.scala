@@ -4,7 +4,7 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.plugins.scala.lang.psi.api.base.literals.ScStringLiteral
 import org.jetbrains.plugins.scala.macroAnnotations.Measure
 
-//@todo handle Scala3 case: unicode escape sequences are dropped in raw literals
+//todo handle Scala3 case: unicode escape sequences are dropped in raw literals
 class ScLiteralRawEscaper(val literal: ScStringLiteral) extends ScLiteralEscaperBase[ScStringLiteral](literal) {
 
   @Measure
@@ -21,6 +21,5 @@ class ScLiteralRawEscaper(val literal: ScStringLiteral) extends ScLiteralEscaper
     parser.parse(chars, outChars)
   }
 
-  /** @see [[org.jetbrains.plugins.scala.lang.psi.impl.base.PassthroughLiteralEscaper.isOneLine]] */
   override def isOneLine: Boolean = true
 }

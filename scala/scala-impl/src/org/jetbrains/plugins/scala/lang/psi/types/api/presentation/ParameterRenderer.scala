@@ -3,15 +3,17 @@ package org.jetbrains.plugins.scala.lang.psi.types.api.presentation
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScClassParameter, ScParameter}
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.ParameterRenderer.keywordPrefix
 
+import scala.collection.mutable
+
 trait ParameterRendererLike {
 
   final def render(param: ScParameter): String = {
-    val builder = new StringBuilder()
+    val builder = new mutable.StringBuilder()
     render(param, builder)
     builder.result()
   }
 
-  def render(param: ScParameter, buffer: StringBuilder): Unit
+  def render(param: ScParameter, buffer: mutable.StringBuilder): Unit
 }
 
 final class ParameterRenderer(
@@ -37,18 +39,9 @@ final class ParameterRenderer(
     withMemberModifiers, withAnnotations
   )
 
-  def this(
-    typeRenderer: TypeRenderer,
-    modifiersRenderer: ModifiersRendererLike
-  ) = this(
-    typeRenderer,
-    modifiersRenderer,
-    TextEscaper.Noop, false, false
-  )
-
   private def annotationsRenderer = new AnnotationsRenderer(typeRenderer, separator = " ", escaper)
 
-  def render(param: ScParameter, buffer: StringBuilder): Unit = {
+  def render(param: ScParameter, buffer: mutable.StringBuilder): Unit = {
     if (withAnnotations) {
       buffer.append(parameterAnnotations(param))
     }

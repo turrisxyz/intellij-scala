@@ -44,8 +44,8 @@ package object editor {
     def virtualFile: Option[VirtualFile] =
       Option(FileDocumentManager.getInstance().getFile(document))
 
-    def syncToDisk(project: Project): Unit =
-      virtualFile.filter(_.isValid).foreach { file =>
+    def syncToDisk(): Unit =
+      virtualFile.filter(_.isValid).foreach { _ =>
         invokeAndWait {
           inWriteAction {
             FileDocumentManager.getInstance.saveDocumentAsIs(document)
@@ -70,7 +70,6 @@ package object editor {
     def offset: Int = editor.getCaretModel.getOffset
 
     def commitDocument(project: Project): Unit = editor.getDocument.commit(project)
-    def commitDocument(): Unit = editor.getDocument.commit(editor.getProject)
 
     def inScalaString(offset: Int): Boolean = {
       val afterInterpolatedInjection =
@@ -104,13 +103,13 @@ package object editor {
 
   private[editor] def indentKeyword[T <: PsiElement: ClassTag](keywordType: IElementType, file: PsiFile)
                                                               (document: Document, project: Project, element: PsiElement, offset: Int): Unit = {
-    indentElement(file)(document, project, element, offset)(
+    indentElement(file)(document, project, element)(
       elem => elem.getNode.getElementType == keywordType && elem.getParent.is[T]
     )
   }
 
   private[editor] def indentElement(file: PsiFile, checkVisibleOnly: Boolean = true)
-                                   (document: Document, project: Project, element: PsiElement, offset: Int)
+                                   (document: Document, project: Project, element: PsiElement)
                                    (prevCondition: PsiElement => Boolean,
                                     condition: PsiElement => Boolean = _.is[PsiWhiteSpace]): Unit = {
     if (condition(element)) {

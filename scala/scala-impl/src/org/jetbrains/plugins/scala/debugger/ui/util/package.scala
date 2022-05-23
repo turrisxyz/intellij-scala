@@ -31,14 +31,11 @@ package object util {
         }
       }
 
-    def flatTap[B](f: A => CompletableFuture[Unit]): CompletableFuture[A] =
+    def flatTap(f: A => CompletableFuture[Unit]): CompletableFuture[A] =
       cf.flatMap(a => f(a).map(_ => a))
 
     def flatten[AA](implicit ev: A <:< CompletableFuture[AA]): CompletableFuture[AA] =
       cf.flatMap(ev)
-
-    def void: CompletableFuture[Unit] =
-      cf.map(_ => ())
   }
 
   implicit class CompletableFutureTraverseOps[A](private val cfs: Seq[CompletableFuture[A]]) extends AnyVal {

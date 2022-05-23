@@ -9,6 +9,8 @@ import org.jetbrains.jps.incremental.scala.utils.CompileServerSharedMessages
 import org.jetbrains.plugins.scala.compiler.ProcessWatcher.{Log, ignoreErrorTextLine}
 import org.jetbrains.plugins.scala.extensions.invokeLater
 
+import scala.collection.mutable
+
 /**
  * @author Pavel Fatin
  */
@@ -16,7 +18,7 @@ private class ProcessWatcher(project: Project, process: Process, commandLine: St
   private val processHandler = new OSProcessHandler(process, commandLine) {
     override def readerOptions(): BaseOutputReader.Options = BaseOutputReader.Options.BLOCKING
   }
-  private var errorTextBuilder: StringBuilder = new StringBuilder
+  private var errorTextBuilder = new mutable.StringBuilder
   private var errorInStdOut = false
   private val lock = new Object()
 
@@ -32,13 +34,12 @@ private class ProcessWatcher(project: Project, process: Process, commandLine: St
   def running: Boolean = !processHandler.isProcessTerminated
 
   def pid: Long = process.pid()
-  def exitValue: Long = process.exitValue()
 
   def errorsText(): String = {
     lock.synchronized {
       if (errorTextBuilder.nonEmpty) {
         val result = errorTextBuilder
-        errorTextBuilder = new StringBuilder
+        errorTextBuilder = new mutable.StringBuilder
         result.mkString.linesIterator.filterNot(ignoreErrorTextLine).mkString("\n")
       }
       else ""
@@ -52,7 +53,7 @@ private class ProcessWatcher(project: Project, process: Process, commandLine: St
   }
 
   private var _terminatedByIdleTimeout = false
-  def isTerminatedByIdleTimeout = _terminatedByIdleTimeout
+  def isTerminatedByIdleTimeout: Boolean = _terminatedByIdleTimeout
 
   private object MyProcessListener extends ProcessAdapter {
     override def onTextAvailable(event: ProcessEvent, outputType: Key[_]): Unit = {

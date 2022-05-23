@@ -154,7 +154,7 @@ final class TriggerCompilerHighlightingService(project: Project)
   def beforeIncrementalCompilation(): Unit = {
     changedFiles
       .flatMap { virtualFile => inReadAction(virtualFile.findDocument) }
-      .foreach(_.syncToDisk(project))
+      .foreach(_.syncToDisk())
     changedFiles = Set.empty
   }
 

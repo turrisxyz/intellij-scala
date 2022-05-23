@@ -19,7 +19,10 @@ import org.jetbrains.plugins.scala.lang.psi.impl.source.ScalaCodeFragment
 import org.jetbrains.plugins.scala.project.ProjectContext
 import org.jetbrains.plugins.scala.util.IndentUtil
 
+import java.io.File
 import scala.annotation.tailrec
+
+case class OutputFileObject(file: File, origName: String)
 
 private[evaluator] case class GeneratedClass(syntheticFile: PsiFile, newContext: PsiElement, generatedClassName: String) {
   import GeneratedClass._
@@ -41,7 +44,7 @@ private[evaluator] case class GeneratedClass(syntheticFile: PsiFile, newContext:
     }
     val compiled = helper.compile(fileText, module)
     compiled.collect {
-      case (f, name) if name.contains(generatedClassName) => new OutputFileObject(f, name)
+      case (f, name) if name.contains(generatedClassName) => OutputFileObject(f, name)
     }.toSeq
   }
 }

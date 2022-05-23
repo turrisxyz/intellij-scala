@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.evaluation._
 import com.intellij.debugger.engine.evaluation.expression.{Evaluator, ExpressionEvaluator, Modifier}
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.{PsiElement, PsiFile}
 import com.sun.jdi._
 import org.jetbrains.plugins.scala.debugger.evaluation._
@@ -80,7 +81,7 @@ class ScalaCompilingEvaluator(psiContext: PsiElement, fragment: ScalaCodeFragmen
     val classLoaderType = classLoader.referenceType.asInstanceOf[ClassType]
     val defineMethod: Method = classLoaderType.concreteMethodByName("defineClass", "(Ljava/lang/String;[BII)Ljava/lang/Class;")
     for (cls <- classes if !alreadyDefined(cls.origName)) {
-      val bytes: Array[Byte] = cls.toByteArray
+      val bytes: Array[Byte] = FileUtil.loadFileBytes(cls.file)
       val args: util.ArrayList[Value] = new util.ArrayList[Value]
       val name: StringReference = proxy.mirrorOf(cls.origName)
       keep(name, context)

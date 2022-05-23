@@ -6,13 +6,13 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.{Pair => IdeaPair}
-import com.intellij.openapi.vfs.{VfsUtil, VirtualFile}
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.{PathUtil, Function => IdeaFunction}
 
 import _root_.java.io._
 import _root_.java.lang.{Boolean => JavaBoolean}
 import _root_.java.security.MessageDigest
-import _root_.java.util.{Optional, ArrayList => JArrayList, List => JList}
+import _root_.java.util.{ArrayList => JArrayList, List => JList}
 import scala.annotation.tailrec
 import scala.jdk.CollectionConverters._
 import scala.language.implicitConversions
@@ -36,15 +36,11 @@ package object sbt {
 
     def /(@NonNls path: String): File = new File(file, path)
 
-    def `<<`: File = <<(1)
-
     def `<<`(level: Int): File = RichFile.parent(file, level)
 
     @NonNls def name: String = file.getName
 
     @NonNls def path: String = file.getPath
-
-    @NonNls def absolutePath: String = file.getAbsolutePath
 
     @NonNls def canonicalPath: String = ExternalSystemApiUtil.toCanonicalPath(file.getAbsolutePath)
 
@@ -63,19 +59,11 @@ package object sbt {
     private def endsWith0(file: File, parts: Seq[String]): Boolean = if (parts.isEmpty) true else
       parts.head == file.getName && Option(file.getParentFile).exists(endsWith0(_, parts.tail))
 
-    def url: String = VfsUtil.getUrlForLibraryRoot(file)
-
     def isAncestorOf(aFile: File): Boolean = FileUtil.isAncestor(file, aFile, true)
-
-    def isUnder(root: File): Boolean = FileUtil.isAncestor(root, file, true)
 
     def isIn(root: File): Boolean = file.getParentFile == root
 
     def isOutsideOf(root: File): Boolean = !FileUtil.isAncestor(root, file, false)
-
-    def copyTo(destination: File): Unit = {
-      copy(file, destination)
-    }
 
     def ls(filter: String => Boolean): Seq[File] =
       if (file.isDirectory) file.listFiles().filter(file => filter(file.getName)).toSeq
@@ -91,8 +79,6 @@ package object sbt {
   }
 
   implicit class RichVirtualFile(private val entry: VirtualFile) extends AnyVal {
-    def containsDirectory(@NonNls name: String): Boolean = find(name).exists(_.isDirectory)
-
     def containsFile(@NonNls name: String): Boolean = find(name).exists(_.isFile)
 
     def find(@NonNls name: String): Option[VirtualFile] = Option(entry.findChild(name))
@@ -111,21 +97,10 @@ package object sbt {
   implicit class RichBoolean(private val b: Boolean) extends AnyVal {
     def option[A](a: => A): Option[A] = if (b) Some(a) else None
 
-    def either[A, B](right: => B)(left: => A): Either[A, B] = if (b) Right(right) else Left(left)
-
     def seq[A](a: A*): Seq[A] = if (b) Seq(a: _*) else Seq.empty
   }
 
   implicit class RichSeq[T](private val xs: Seq[T]) extends AnyVal {
-    def distinctBy[A](f: T => A): Seq[T] = {
-      val (_, ys) = xs.foldLeft((Set.empty[A], Vector.empty[T])) {
-        case ((set, acc), x) =>
-          val v = f(x)
-          if (set.contains(v)) (set, acc) else (set + v, acc :+ x)
-      }
-      ys
-    }
-
     def toJavaList: JList[T] = new JArrayList[T](xs.asJava)
   }
 
@@ -133,15 +108,6 @@ package object sbt {
     // Use for safely checking for null in chained calls
     // TODO: duplicates one from org.jetbrains.sbt.RichOption#safeMap, remove this, do not depend on sbt module for this method
     @inline def safeMap[A](f: T => A): Option[A] = if (opt.isEmpty) None else Option(f(opt.get))
-
-    def toJavaOptional: Optional[T] = opt match {
-      case Some(a) => Optional.of(a)
-      case None => Optional.empty()
-    }
-  }
-
-  implicit class RichOptional[T](val opt: Optional[T]) extends AnyVal {
-    def asScala: Option[T] = if (opt.isPresent) Some(opt.get) else None
   }
 
   def jarWith[T: ClassTag]: File = {
