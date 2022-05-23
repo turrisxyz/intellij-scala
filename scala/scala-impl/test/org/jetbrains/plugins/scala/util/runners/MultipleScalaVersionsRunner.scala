@@ -86,13 +86,11 @@ private object MultipleScalaVersionsRunner {
   }
 
   private case class ScalaVersionTestSuite(name: String) extends MyBaseTestSuite(name) {
-    def this() = this(null: String)
     def this(version: ScalaVersion) = this(sanitize(s"(scala ${version.minor})"))
     def this(version: ScalaVersion, jdkVersion: JdkVersion) = this(sanitize(s"(scala ${version.minor} $jdkVersion)"))
   }
 
   private case class JdkVersionTestSuite(name: String) extends MyBaseTestSuite(name) {
-    def this() = this(null: String)
     def this(version: JdkVersion) = this(sanitize(s"(jdk ${version.toString})"))
   }
 
@@ -241,6 +239,7 @@ private object MultipleScalaVersionsRunner {
     Option(inner(klass).asInstanceOf[T])
   }
 
+  @scala.annotation.unused
   private def debugLog(d: Description, deep: Int = 0): Unit = {
     val annotations = d.getAnnotations.asScala.map(_.annotationType.getName).mkString(",")
     val details = s"${d.getMethodName}, ${d.getClassName}, ${d.getTestClass}, $annotations"

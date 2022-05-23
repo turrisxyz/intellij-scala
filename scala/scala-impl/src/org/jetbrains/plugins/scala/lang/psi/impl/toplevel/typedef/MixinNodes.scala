@@ -224,8 +224,6 @@ object MixinNodes {
 
     }
 
-    def nameCount: Int = allNames.size
-
     def nodesIterator(decodedName: String,
                       isSupers: Boolean,
                       onlyImplicit: Boolean = false): Iterator[Node[T]] = {
@@ -536,13 +534,4 @@ object MixinNodes {
         }
       case _ => tp.extractClassType
     }
-}
-
-
-object FailedImplicitConversionLookupExample {
-  import scala.language.implicitConversions
-  final case class Hello(to: String = "World")
-  implicit def wrapGreeting(to: String): Hello = Hello(to)
-  def sayHello(hello: Hello = Hello()): Unit = println(s"Hello, ${hello.to}!")
-  sayHello("JetBrains")
 }

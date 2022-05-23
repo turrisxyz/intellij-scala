@@ -5,14 +5,13 @@ import com.intellij.codeInspection.ex.{InspectionProfileImpl, InspectionToolWrap
 import com.intellij.codeInspection.{InspectionManager, InspectionProfile}
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
-import com.intellij.ide.startup.impl.StartupManagerImpl
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.actionSystem._
 import com.intellij.openapi.actionSystem.impl.ActionManagerImpl
 import com.intellij.openapi.module.{Module, ModuleManager}
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.{DumbService, Project, ProjectManager}
-import com.intellij.openapi.startup.StartupManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.{PsiFile, PsiManager}
 import com.intellij.testFramework.{HeavyPlatformTestCase, LeakHunter, ThreadTracker}
@@ -66,7 +65,7 @@ class MemoryLeakTest extends HeavyPlatformTestCase {
 
     myProject = project
     StartupManager.getInstance(project) match {
-      case manager: StartupManagerImpl => assertTrue(manager.postStartupActivityPassed)
+      case manager: StartupManager => assertTrue(manager.postStartupActivityPassed)
     }
 
     assertTrue(project.isOpen)
@@ -120,8 +119,7 @@ class MemoryLeakTest extends HeavyPlatformTestCase {
     val file = findFile("HelloWorld.scala").asInstanceOf[ScalaFile]
 
     processFile(file)
-    val settings = createRunConfiguration(file)
-//    assertNotNull(settings)
+    createRunConfiguration(file)
   }
 
   private def checkLeak[T](root: AnyRef, clazz: Class[T], isLeak: T => Boolean): Unit = {
