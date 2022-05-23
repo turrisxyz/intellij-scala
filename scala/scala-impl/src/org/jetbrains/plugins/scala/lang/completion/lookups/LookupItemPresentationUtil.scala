@@ -2,12 +2,9 @@ package org.jetbrains.plugins.scala.lang.completion.lookups
 
 import com.intellij.psi._
 import org.jetbrains.plugins.scala.extensions.{PsiTypeExt, _}
-import org.jetbrains.plugins.scala.lang.psi.api.ScalaPsiElement
-import org.jetbrains.plugins.scala.lang.psi.api.base.ScAccessModifier
 import org.jetbrains.plugins.scala.lang.psi.api.statements.ScFunction
 import org.jetbrains.plugins.scala.lang.psi.api.statements.params.{ScParameter, ScParameterClause, ScParameters, ScTypeParam, ScTypeParamClause}
 import org.jetbrains.plugins.scala.lang.psi.api.toplevel.templates.ScTemplateBody
-import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.AccessModifierRenderer.AccessQualifierRenderer
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation.TypeAnnotationRenderer.ParameterTypeDecorateOptions
 import org.jetbrains.plugins.scala.lang.psi.types.api.presentation._
 import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.Parameter
@@ -15,10 +12,12 @@ import org.jetbrains.plugins.scala.lang.psi.types.recursiveUpdate.ScSubstitutor
 import org.jetbrains.plugins.scala.lang.psi.types.{ScType, TypePresentationContext}
 import org.jetbrains.plugins.scala.project.ProjectContext
 
+import scala.collection.mutable
+
 private object LookupItemPresentationUtil {
 
   def presentationStringForParameter(param: Parameter, substitutor: ScSubstitutor): String = {
-    val builder = new StringBuilder
+    val builder = new mutable.StringBuilder
     builder.append(param.name)
     builder.append(": " + presentationStringForScalaType(param.paramType, substitutor))
     if (param.isRepeated) builder.append("*")
@@ -40,13 +39,6 @@ private object LookupItemPresentationUtil {
       case _ =>
         presentationStringForScalaType(psiType.toScType(), substitutor)
     }
-
-
-  def presentationStringForPsiElement(element: ScalaPsiElement): String = {
-    val substitutor = ScSubstitutor.empty
-    val projectContext = element.projectContext
-    presentationStringForPsiElement(element, substitutor)(projectContext)
-  }
 
   def presentationStringForPsiElement(element: PsiElement, substitutor: ScSubstitutor)
                                      (implicit project: ProjectContext): String = {
@@ -107,7 +99,7 @@ private object LookupItemPresentationUtil {
 
   private def renderPsiParameter(substitutor: ScSubstitutor, param: PsiParameter)
                                 (implicit project: ProjectContext): String = {
-    val buffer: StringBuilder = new StringBuilder("")
+    val buffer = new mutable.StringBuilder("")
     val list = param.getModifierList
     if (list == null)
       return ""
@@ -130,9 +122,6 @@ private object LookupItemPresentationUtil {
     buffer.append(presentationStringForJavaType(param.getType, substitutor))
     buffer.toString
   }
-
-  private def accessModifierText(modifier: ScAccessModifier): String =
-    new AccessModifierRenderer(new AccessQualifierRenderer.SimpleText(textEscaper)).render(modifier)
 
   private def textEscaper: TextEscaper = TextEscaper.Html
 }

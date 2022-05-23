@@ -15,6 +15,7 @@ import org.jetbrains.plugins.scala.components.libextensions._
 import java.awt.BorderLayout
 import java.io.File
 import javax.swing._
+import scala.collection.mutable
 
 class LibExtensionsSettingsPanelWrapper(private val rootPanel: JPanel,
                                         private val project: Project) {
@@ -26,7 +27,7 @@ class LibExtensionsSettingsPanelWrapper(private val rootPanel: JPanel,
   // Exported components
   val enabledCB: JCheckBox = new JCheckBox(ScalaBundle.message("enable.loading.external.extensions"), true)
 
-  class LibraryListModel(val extensionsModel: LibraryDetailsModel) extends AbstractListModel[ExtensionJarData] {
+  class LibraryListModel extends AbstractListModel[ExtensionJarData] {
     private val extensionsManager: LibraryExtensionsManager = libraryExtensionsManager
     override def getSize: Int = extensionsManager.getAvailableLibraries.length
     override def getElementAt(i: Int): ExtensionJarData = extensionsManager.getAvailableLibraries(i)
@@ -72,13 +73,13 @@ class LibExtensionsSettingsPanelWrapper(private val rootPanel: JPanel,
     extensionsList.setEmptyText(ScalaBundle.message("select.library.from.the.list.above"))
     extensionsList.installCellRenderer { (ext: ExtensionDescriptor) =>
       val ExtensionDescriptor(_, impl, name, description, _) = ext
-      val builder = new StringBuilder
+      val builder = new mutable.StringBuilder
       if (name.nonEmpty) builder.append(name) else builder.append(impl)
       if (description.nonEmpty) builder.append(s" - $description")
       new JBLabel(builder.mkString)
     }
 
-    val libraryListModel = new LibraryListModel(detailsModel)
+    val libraryListModel = new LibraryListModel
     val librariesList = new JBList[ExtensionJarData](libraryListModel)
     val toolbarDecorator = ToolbarDecorator.createDecorator(librariesList)
 
@@ -87,7 +88,7 @@ class LibExtensionsSettingsPanelWrapper(private val rootPanel: JPanel,
       val descriptor = librariesList.getSelectedValue
       if (descriptor != null) {
         libraryExtensionsManager.removeExtension(descriptor)
-        librariesList.setModel(new LibraryListModel(detailsModel))
+        librariesList.setModel(new LibraryListModel)
         extensionsList.setModel(detailsModel)
       }
     }
@@ -99,7 +100,7 @@ class LibExtensionsSettingsPanelWrapper(private val rootPanel: JPanel,
       if (jar != null)
         try {
           libraryExtensionsManager.addExtension(new File(jar.getCanonicalPath))
-          librariesList.setModel(new LibraryListModel(detailsModel))
+          librariesList.setModel(new LibraryListModel)
         } catch {
           case ex: ExtensionException =>
             //noinspection ReferencePassedToNls
@@ -121,7 +122,7 @@ class LibExtensionsSettingsPanelWrapper(private val rootPanel: JPanel,
     }
     librariesList.installCellRenderer{ (ld: ExtensionJarData) =>
       val ExtensionJarData(LibraryDescriptor(name, _, description, vendor, version, _), file, _) = ld
-      val builder = new StringBuilder
+      val builder = new mutable.StringBuilder
       if (vendor.nonEmpty) builder.append(s"($vendor) ")
       builder.append(s"$name $version")
       if (description.nonEmpty) builder.append(s" - $description")
@@ -142,7 +143,7 @@ class LibExtensionsSettingsPanelWrapper(private val rootPanel: JPanel,
     enabledCB.addActionListener { _ =>
       libraryExtensionsManager.setEnabled(enabledCB.isSelected)
       val detailsModel = new LibraryDetailsModel(None)
-      val libraryListModel = new LibraryListModel(detailsModel)
+      val libraryListModel = new LibraryListModel
       extensionsList.setModel(detailsModel)
       librariesList.setModel(libraryListModel)
       UIUtil.setEnabled(listsPane, enabledCB.isSelected, true)

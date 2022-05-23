@@ -28,12 +28,6 @@ trait LocationLineManager {
 
   private val syntheticProvider = SyntheticTypeComponentProvider.EP_NAME.findExtension(classOf[ScalaSyntheticProvider])
 
-  def clearLocationLineCaches(): Unit = {
-    customizedLocationsCache.clear()
-    lineToCustomizedLocationCache.clear()
-    seenRefTypes.clear()
-  }
-
   def exactLineNumber(location: Location): Int = location match {
     case gen: GeneratedLocation =>
       gen.lineNumber()
@@ -395,7 +389,7 @@ object LocationLineManager {
   val twoBytesLoadCodes: Set[Byte] = twoBytesCodes.values.toSet
   val twoBytesStoreCodes: Set[Byte] = twoBytesCodes.keySet
 
-  val returnCodes = Set(areturn, dreturn, freturn, ireturn, lreturn, voidReturn)
+  val returnCodes: Set[Byte] = Set(areturn, dreturn, freturn, ireturn, lreturn, voidReturn)
 
   private def iloadCode(istoreCode: Seq[Byte]): Seq[Byte] = {
     istoreCode match {
