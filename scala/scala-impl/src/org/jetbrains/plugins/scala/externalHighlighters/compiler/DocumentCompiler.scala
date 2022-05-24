@@ -11,7 +11,6 @@ import org.jetbrains.jps.incremental.scala.remote.CommandIds
 import org.jetbrains.jps.incremental.scala.{Client, DelegateClient}
 import org.jetbrains.plugins.scala.compiler.{RemoteServerConnectorBase, RemoteServerRunner}
 import org.jetbrains.plugins.scala.editor.DocumentExt
-import org.jetbrains.plugins.scala.externalHighlighters.ScalaHighlightingMode
 import org.jetbrains.plugins.scala.project.VirtualFileExt
 
 import java.io.File
@@ -100,11 +99,4 @@ object DocumentCompiler {
   def get(project: Project): DocumentCompiler =
     project.getService(classOf[DocumentCompiler])
 
-  def outputDirectoryFor(module: Module): Option[File] = {
-    val project = module.getProject
-    if (ScalaHighlightingMode.isShowErrorsFromCompilerEnabled(project))
-      Option(get(project).outputDirectories.get(module))
-    else
-      None
-  }
 }

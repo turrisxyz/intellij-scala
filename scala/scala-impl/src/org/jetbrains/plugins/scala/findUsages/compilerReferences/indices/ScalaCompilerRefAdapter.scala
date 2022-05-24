@@ -19,7 +19,9 @@ import org.jetbrains.plugins.scala.lang.psi.types.ScType
 import org.jetbrains.plugins.scala.lang.psi.types.nonvalue.Parameter
 
 import java.util
+import scala.annotation.unused
 
+@unused("registered in scala-plugin-common.xml")
 private class ScalaCompilerRefAdapter extends JavaCompilerRefAdapterCompat {
   import ScalaCompilerRefAdapter._
 

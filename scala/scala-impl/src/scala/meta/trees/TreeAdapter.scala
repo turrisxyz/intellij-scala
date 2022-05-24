@@ -146,7 +146,7 @@ trait TreeAdapter {
 
   def ctor(pc: Option[ScPrimaryConstructor]): m.Ctor.Primary = {
     pc match {
-      case Some(ctor) => m.Ctor.Primary(convertMods(ctor), toPrimaryCtorName(ctor), ctor.parameterList.clauses.map(convertParamClause).toList)
+      case Some(ctor) => m.Ctor.Primary(convertMods(ctor), toPrimaryCtorName, ctor.parameterList.clauses.map(convertParamClause).toList)
       case None => unreachable(ScalaMetaBundle.message("no.primary.constructor.in.class"))
     }
   }

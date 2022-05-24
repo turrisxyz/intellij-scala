@@ -190,7 +190,7 @@ object ScExpressionAnnotator extends ElementAnnotator[ScExpression] {
                 return
               }
               var fixes: Seq[(IntentionAction, TextRange)] = Seq.empty
-              def addFix(fix: IntentionAction, range: TextRange = element.getTextRange): Unit = {
+              def addFix(fix: IntentionAction): Unit = {
                 fixes :+= (fix, element.getTextRange)
               }
 
@@ -204,7 +204,7 @@ object ScExpressionAnnotator extends ElementAnnotator[ScExpression] {
                 case Some(te) if te.getContainingFile == element.getContainingFile =>
                   val changeTypeFix = new ChangeTypeFix(te, exprType.getOrNothing)
                   addFix(changeTypeFix)
-                  addFix(changeTypeFix, te.getTextRange)
+                  addFix(changeTypeFix)
                 case _ =>
               }
               val target = element match {
